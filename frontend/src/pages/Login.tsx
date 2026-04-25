@@ -1,6 +1,6 @@
 // Login.tsx — Page component; handles user authentication (login and registration) with a unified form.
 import { useState } from 'react';
-import { ShieldCheck, Mail, Lock, ArrowRight, User } from 'lucide-react';
+import { Mail, Lock, ArrowRight, User } from 'lucide-react';
 import { authApi } from '../features/auth/auth.api';
 import type { UserProfile } from '../types';
 

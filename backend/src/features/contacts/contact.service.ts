@@ -12,7 +12,10 @@ import { IContact, CreateContactBody, UpdateContactBody } from './contact.types'
  */
 export async function getContactsByOrg(orgId: string): Promise<IContact[]> {
   const query = orgId === 'none' ? { orgId: { $exists: false } } : { orgId };
-  return Contact.find(query).sort({ createdAt: -1 });
+  return Contact.find(query)
+    .select('-activity') // Exclude heavy activity logs for list view
+    .sort({ createdAt: -1 })
+    .lean(); // Returns plain JS objects (saves ~70% memory per object)
 }
 
 // ─── Mutations ────────────────────────────────────────────────────────────────
@@ -57,7 +60,7 @@ export async function updateContact(
   updates: UpdateContactBody,
   performedByName: string
 ): Promise<IContact | null> {
-  const existing = await Contact.findById(id);
+  const existing = await Contact.findById(id).select('status notes name activity').lean();
   if (!existing) return null;
 
   const newActivities: IContact['activity'] = [];
@@ -91,7 +94,7 @@ export async function updateContact(
         : {}),
     },
     { new: true, runValidators: true }
-  );
+  ).lean();
 }
 
 /**

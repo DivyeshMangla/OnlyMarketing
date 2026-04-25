@@ -15,7 +15,7 @@ const organizationSchema = new Schema<IOrganization>(
     timestamps: true,
     toJSON: {
       virtuals: true,
-      transform: (_, ret) => {
+      transform: (_, ret: any) => {
         ret.id = ret._id.toString();
         delete ret._id;
         delete ret.__v;
