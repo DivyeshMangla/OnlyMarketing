@@ -8,10 +8,10 @@ services:
       - mongo_data:/data/db
 
   server:
-    build: ./backend
+    build: . # Uses the new root Dockerfile (Monolith)
     container_name: marketing_portal_server
     ports:
-      - "5000:5000"
+      - "5173:5000" # Map 5173 (client port) to 5000 (backend port)
     environment:
       - MONGO_URI=mongodb://mongo:27017/marketing_portal
       - JWT_SECRET=supersecretkey123
@@ -25,20 +25,6 @@ services:
           memory: 512M
         reservations:
           memory: 256M
-
-  client:
-    build: ./frontend
-    container_name: marketing_portal_client
-    ports:
-      - "5173:80"
-    depends_on:
-      - server
-    deploy:
-      resources:
-        limits:
-          memory: 128M
-        reservations:
-          memory: 64M
 
 volumes:
   mongo_data:
