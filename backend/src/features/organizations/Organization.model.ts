@@ -34,23 +34,28 @@ const organizationSchema = new Schema<IOrganization>(
     toJSON: {
       virtuals: true,
       transform: (_, ret: any) => {
-        ret.id = ret._id ? ret._id.toString() : ret.id;
+        // Ensure id is a string
+        if (ret._id) ret.id = ret._id.toString();
         
-        if (ret.members) {
+        if (Array.isArray(ret.members)) {
           ret.members = ret.members.map((m: any) => {
-            // Handle populated case
-            if (m.userId && typeof m.userId === 'object' && m.userId.name) {
-              return {
-                ...m,
-                user: { name: m.userId.name, email: m.userId.email },
-                userId: m.userId._id ? m.userId._id.toString() : m.userId.toString()
+            const memberObj = { ...m };
+            
+            // Check if userId is populated (is an object with name property)
+            const isPopulated = m.userId && typeof m.userId === 'object' && 'name' in m.userId;
+            
+            if (isPopulated) {
+              memberObj.user = { 
+                name: m.userId.name, 
+                email: m.userId.email 
               };
+              memberObj.userId = m.userId._id ? m.userId._id.toString() : m.userId.toString();
+            } else if (m.userId) {
+              // Ensure raw userId is a string
+              memberObj.userId = m.userId.toString();
             }
-            // Handle non-populated case (ensure string)
-            if (m.userId && typeof m.userId !== 'string') {
-               m.userId = m.userId.toString();
-            }
-            return m;
+            
+            return memberObj;
           });
         }
 

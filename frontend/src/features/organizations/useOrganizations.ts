@@ -48,6 +48,7 @@ export const useOrganizations = () => {
    */
   const updateOrg = async (id: string, updates: Partial<Organization>) => {
     const updated = await organizationsApi.update(id, updates);
+    if (!updated) return;
     setOrganizations(prev => prev.map(o => o.id === id ? updated : o));
     return updated;
   };
@@ -62,12 +63,14 @@ export const useOrganizations = () => {
 
   const updateMember = async (orgId: string, userId: string, status?: MemberStatus, role?: OrgRole) => {
     const updated = await organizationsApi.updateMember(orgId, userId, { status, role });
+    if (!updated) return;
     setOrganizations(prev => prev.map(o => o.id === orgId ? updated : o));
     return updated;
   };
 
   const removeOrgMember = async (orgId: string, userId: string) => {
     const updated = await organizationsApi.removeMember(orgId, userId);
+    if (!updated) return;
     setOrganizations(prev => prev.map(o => o.id === orgId ? updated : o));
     return updated;
   };
