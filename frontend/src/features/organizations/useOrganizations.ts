@@ -68,7 +68,7 @@ export const useOrganizations = () => {
     return updated;
   };
 
-  const removeOrgMember = async (orgId: string, userId: string) => {
+  const removeMember = async (orgId: string, userId: string) => {
     const updated = await organizationsApi.removeMember(orgId, userId);
     if (!updated) return;
     setOrganizations(prev => prev.map(o => o.id === orgId ? updated : o));
