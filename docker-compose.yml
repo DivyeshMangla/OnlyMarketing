@@ -1,0 +1,31 @@
+services:
+  mongo:
+    image: mongo:latest
+    container_name: marketing_portal_db
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+
+  server:
+    build: ./backend
+    container_name: marketing_portal_server
+    ports:
+      - "5000:5000"
+    environment:
+      - MONGO_URI=mongodb://mongo:27017/marketing_portal
+      - JWT_SECRET=supersecretkey123
+      - PORT=5000
+    depends_on:
+      - mongo
+
+  client:
+    build: ./frontend
+    container_name: marketing_portal_client
+    ports:
+      - "5173:5173"
+    depends_on:
+      - server
+
+volumes:
+  mongo_data:
