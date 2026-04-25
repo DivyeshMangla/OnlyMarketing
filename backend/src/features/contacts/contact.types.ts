@@ -49,4 +49,8 @@ export interface CreateContactBody {
 export interface UpdateContactBody {
   status?: ContactStatus;
   notes?: string;
+  newActivity?: {
+    type: string;
+    desc: string;
+  };
 }

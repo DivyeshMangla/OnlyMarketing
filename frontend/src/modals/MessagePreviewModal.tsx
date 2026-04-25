@@ -11,12 +11,13 @@ interface MessagePreviewModalProps {
   user: UserProfile;
   org: Organization;
   onClose: () => void;
+  onLogActivity: (type: string, desc: string) => void;
 }
 
 /**
  * Modal for finalizing and sending outreach messages via WhatsApp or Email.
  */
-export const MessagePreviewModal = ({ type, template, contact, user, org, onClose }: MessagePreviewModalProps) => {
+export const MessagePreviewModal = ({ type, template, contact, user, org, onClose, onLogActivity }: MessagePreviewModalProps) => {
   // ─── State ──────────────────────────────────────────────────────────────────
   const initialMessage = fillPlaceholders(template, { contact, user, org });
   const [message, setMessage] = useState(initialMessage);
@@ -30,6 +31,7 @@ export const MessagePreviewModal = ({ type, template, contact, user, org, onClos
   const handleCopy = () => {
     navigator.clipboard.writeText(message);
     setIsCopied(true);
+    onLogActivity('Outreach', `Copied ${type} draft to clipboard`);
     setTimeout(() => setIsCopied(false), 2000);
   };
 
@@ -39,6 +41,7 @@ export const MessagePreviewModal = ({ type, template, contact, user, org, onClos
   const handleSendWhatsApp = () => {
     const cleanPhone = contact.phone.replace(/\D/g, '');
     const encodedMsg = encodeURIComponent(message);
+    onLogActivity('Outreach', 'Opened WhatsApp with draft message');
     window.open(`https://wa.me/${cleanPhone}?text=${encodedMsg}`, '_blank');
   };
 

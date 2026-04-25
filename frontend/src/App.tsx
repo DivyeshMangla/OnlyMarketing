@@ -241,6 +241,7 @@ export default function App() {
           user={userProfile!} 
           org={activeOrg} 
           onClose={() => setActivePreview(null)} 
+          onLogActivity={(type, desc) => updateContact(selectedContact.id, { newActivity: { type, desc } })}
         />
       )}
     </div>

@@ -43,12 +43,12 @@ export const useContacts = (activeOrgId: string | null) => {
   };
 
   /**
-   * Updates a contact's status or notes.
+   * Updates a contact's status, notes, or adds a new activity.
    * @param id - Contact ID
-   * @param updates - Partial updates
+   * @param updates - Partial updates and optional new activity
    * @returns Updated contact
    */
-  const updateContact = async (id: string, updates: { status?: ContactStatus; notes?: string }) => {
+  const updateContact = async (id: string, updates: { status?: ContactStatus; notes?: string; newActivity?: { type: string; desc: string } }) => {
     const updated = await contactsApi.update(id, updates);
     setContacts(prev => prev.map(c => c.id === id ? updated : c));
     return updated;

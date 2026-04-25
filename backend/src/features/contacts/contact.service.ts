@@ -12,10 +12,16 @@ import { IContact, CreateContactBody, UpdateContactBody } from './contact.types'
  */
 export async function getContactsByOrg(orgId: string): Promise<IContact[]> {
   const query = orgId === 'none' ? { orgId: { $exists: false } } : { orgId };
-  return Contact.find(query)
+  const contacts = await Contact.find(query)
     .select('-activity') // Exclude heavy activity logs for list view
     .sort({ createdAt: -1 })
-    .lean(); // Returns plain JS objects (saves ~70% memory per object)
+    .lean();
+  
+  return contacts.map(c => ({ 
+    ...c, 
+    id: c._id.toString(),
+    date: new Date(c.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+  })) as unknown as IContact[];
 }
 
 /**
@@ -24,7 +30,13 @@ export async function getContactsByOrg(orgId: string): Promise<IContact[]> {
  * @returns Contact document or null
  */
 export async function getContactById(id: string | Types.ObjectId): Promise<IContact | null> {
-  return Contact.findById(id).lean();
+  const contact = await Contact.findById(id).lean();
+  if (!contact) return null;
+  return { 
+    ...contact, 
+    id: contact._id.toString(),
+    date: new Date(contact.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+  } as unknown as IContact;
 }
 
 // ─── Mutations ────────────────────────────────────────────────────────────────
@@ -94,7 +106,17 @@ export async function updateContact(
     });
   }
 
-  return Contact.findByIdAndUpdate(
+  if (updates.newActivity) {
+    newActivities.push({
+      type: updates.newActivity.type,
+      desc: updates.newActivity.desc,
+      date: new Date(),
+      performedBy: performedByName,
+      contactName: existing.name,
+    });
+  }
+
+  const updated = await Contact.findByIdAndUpdate(
     id,
     {
       ...updates,
@@ -104,6 +126,13 @@ export async function updateContact(
     },
     { new: true, runValidators: true }
   ).lean();
+
+  if (!updated) return null;
+  return { 
+    ...updated, 
+    id: updated._id.toString(),
+    date: new Date(updated.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+  } as unknown as IContact;
 }
 
 /**

@@ -10,7 +10,7 @@ export const contactsApi = {
     data,
   }),
   
-  update: (id: string, data: { status?: ContactStatus; notes?: string }) => apiClient<Contact>(`/contacts/${id}`, {
+  update: (id: string, data: { status?: ContactStatus; notes?: string; newActivity?: { type: string; desc: string } }) => apiClient<Contact>(`/contacts/${id}`, {
     method: 'PUT',
     data,
   }),

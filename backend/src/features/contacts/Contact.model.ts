@@ -40,6 +40,11 @@ const contactSchema = new Schema<IContact>(
       virtuals: true,
       transform: (_, ret: any) => {
         ret.id = ret._id.toString();
+        ret.date = new Date(ret.createdAt).toLocaleDateString('en-US', {
+          month: 'short',
+          day: 'numeric',
+          year: 'numeric',
+        });
         delete ret._id;
         delete ret.__v;
       },
