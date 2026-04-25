@@ -3,6 +3,71 @@ import { Types } from 'mongoose';
 import { Organization } from './Organization.model';
 import { IOrganization, CreateOrgBody, UpdateOrgBody, OrgRole, MemberStatus } from './organization.types';
 
+type PopulatedUser = {
+  _id?: Types.ObjectId | string;
+  id?: string;
+  name?: string;
+  email?: string;
+};
+
+type RawOrgMember = {
+  userId: Types.ObjectId | string | PopulatedUser;
+  role: OrgRole;
+  status: MemberStatus;
+};
+
+type RawOrganization = {
+  _id: Types.ObjectId | string;
+  name: string;
+  proposalFileName?: string;
+  proposalData?: string;
+  emailTemplate?: string;
+  whatsappTemplate?: string;
+  instaTemplate?: string;
+  members?: RawOrgMember[];
+  createdAt?: Date;
+  updatedAt?: Date;
+};
+
+function isPopulatedUser(value: RawOrgMember['userId']): value is PopulatedUser {
+  return typeof value === 'object' && value !== null && ('name' in value || 'email' in value || '_id' in value || 'id' in value);
+}
+
+function toUserIdString(value: RawOrgMember['userId']): string {
+  if (isPopulatedUser(value)) {
+    return String(value._id ?? value.id ?? '');
+  }
+  return String(value);
+}
+
+function normalizeOrg(org: RawOrganization | null): IOrganization | null {
+  if (!org) return null;
+
+  return {
+    ...org,
+    id: String(org._id),
+    members: (org.members ?? []).map((member) => ({
+      userId: toUserIdString(member.userId),
+      user: isPopulatedUser(member.userId)
+        ? {
+            name: member.userId.name ?? 'Unknown',
+            email: member.userId.email ?? '',
+          }
+        : undefined,
+      role: member.role,
+      status: member.status,
+    })),
+  } as unknown as IOrganization;
+}
+
+async function getOrgByIdWithMembers(id: string | Types.ObjectId): Promise<IOrganization | null> {
+  const org = await Organization.findById(id)
+    .populate('members.userId', 'name email')
+    .lean<RawOrganization | null>();
+
+  return normalizeOrg(org);
+}
+
 /**
  * Retrieves organizations for a user. Admins get all, others get only approved memberships.
  * @param userId - Requesting user's ID
@@ -12,8 +77,14 @@ import { IOrganization, CreateOrgBody, UpdateOrgBody, OrgRole, MemberStatus } fr
 export async function getAllOrgs(userId: string | Types.ObjectId, isAdmin: boolean = false): Promise<IOrganization[]> {
   const uid = typeof userId === 'string' ? new Types.ObjectId(userId) : userId;
   const query = isAdmin ? {} : { 'members': { $elemMatch: { userId: uid, status: 'Approved' } } };
-  const orgs = await Organization.find(query).populate('members.userId', 'name email').sort({ createdAt: 1 });
-  return orgs.map(o => o.toJSON()) as unknown as IOrganization[];
+  const orgs = await Organization.find(query)
+    .populate('members.userId', 'name email')
+    .sort({ createdAt: 1 })
+    .lean<RawOrganization[]>();
+
+  return orgs
+    .map((org) => normalizeOrg(org))
+    .filter((org): org is IOrganization => org !== null);
 }
 
 /**
@@ -50,8 +121,11 @@ export async function createOrg(data: CreateOrgBody, ownerId: string | Types.Obj
     }]
   });
   await org.save();
-  const populated = await Organization.findById(org._id).populate('members.userId', 'name email');
-  return populated?.toJSON() as unknown as IOrganization;
+  const populated = await getOrgByIdWithMembers(org._id);
+  if (!populated) {
+    throw new Error('Failed to load organization after creation');
+  }
+  return populated;
 }
 
 /**
@@ -60,12 +134,13 @@ export async function createOrg(data: CreateOrgBody, ownerId: string | Types.Obj
  * @param userId - Requesting user's ID
  */
 export async function requestJoin(orgId: string | Types.ObjectId, userId: string | Types.ObjectId): Promise<IOrganization | null> {
-  const updated = await Organization.findByIdAndUpdate(
+  await Organization.findByIdAndUpdate(
     orgId,
     { $addToSet: { members: { userId, role: 'Member', status: 'Pending' } } },
     { new: true }
-  ).populate('members.userId', 'name email');
-  return updated?.toJSON() || null;
+  );
+
+  return getOrgByIdWithMembers(orgId);
 }
 
 /**
@@ -89,20 +164,23 @@ export async function updateMember(
   if (updates.role) member.role = updates.role;
 
   await org.save();
-  const populated = await Organization.findById(orgId).populate('members.userId', 'name email');
-  return populated?.toJSON() || null;
+  return getOrgByIdWithMembers(orgId);
 }
 
 /**
  * Removes a member or rejects a request.
  */
 export async function removeMember(orgId: string | Types.ObjectId, userId: string | Types.ObjectId): Promise<IOrganization | null> {
-  const updated = await Organization.findByIdAndUpdate(
+  const targetUserId =
+    typeof userId === 'string' ? new Types.ObjectId(userId) : userId;
+
+  await Organization.findByIdAndUpdate(
     orgId,
-    { $pull: { members: { userId } } },
+    { $pull: { members: { userId: targetUserId } } },
     { new: true }
-  ).populate('members.userId', 'name email');
-  return updated?.toJSON() || null;
+  );
+
+  return getOrgByIdWithMembers(orgId);
 }
 
 /**
@@ -115,11 +193,12 @@ export async function updateOrg(
   id: string | Types.ObjectId,
   updates: UpdateOrgBody
 ): Promise<IOrganization | null> {
-  const updated = await Organization.findByIdAndUpdate(id, updates, {
+  await Organization.findByIdAndUpdate(id, updates, {
     new: true,
     runValidators: true,
-  }).populate('members.userId', 'name email');
-  return updated?.toJSON() || null;
+  });
+
+  return getOrgByIdWithMembers(id);
 }
 
 /**

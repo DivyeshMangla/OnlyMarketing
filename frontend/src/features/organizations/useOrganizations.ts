@@ -17,6 +17,7 @@ export const useOrganizations = () => {
     queryKey: queryKeys.organizations.all,
     queryFn: organizationsApi.getAll,
     enabled: Boolean(token),
+    refetchInterval: 5000,
   });
 
   const addOrgMutation = useMutation({
