@@ -34,7 +34,7 @@ export const Dashboard = ({ contacts, onSelect, onAddClick }: DashboardProps) =>
             onChange={(e) => setSearchQuery(e.target.value)}
           />
           <button className="add-btn ml-auto" onClick={onAddClick}>
-            <Plus size={16} style={{ marginRight: 8 }} /> Add Contact
+            <Plus size={16} className="btn-icon" /> Add Contact
           </button>
         </div>
         

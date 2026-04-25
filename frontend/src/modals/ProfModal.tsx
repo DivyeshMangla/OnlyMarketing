@@ -1,7 +1,7 @@
 // ProfModal.tsx — Modal component; allows users to view and update their profile settings and log out.
 import { useState, useEffect } from 'react';
 import type { UserProfile, UserPosition } from '../types';
-import { ShieldCheck, LogOut } from 'lucide-react';
+import { ShieldCheck, LogOut, X } from 'lucide-react';
 import { getInitials } from '../lib/userUtils';
 
 interface ProfModalProps {
@@ -43,7 +43,12 @@ export const ProfModal = ({ profile, onClose, onSave, onLogout }: ProfModalProps
   return (
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal-content profile-modal" onClick={e => e.stopPropagation()}>
-        <div className="modal-title">Profile Settings</div>
+        <div className="modal-header-between">
+          <div className="modal-title">Profile Settings</div>
+          <button className="close-btn-static" onClick={onClose} aria-label="Close">
+            <X size={20} />
+          </button>
+        </div>
         <div className="profile-av-wrap">
           <div className="profile-av">{initials}</div>
         </div>

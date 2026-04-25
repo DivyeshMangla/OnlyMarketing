@@ -17,27 +17,31 @@ export const Organizations = ({ orgs, onSelect, onAddClick }: OrganizationsProps
     <div className="page-sub">Manage fests and their outreach templates here.</div>
     <div className="page-toolbar">
       <button className="add-btn" onClick={onAddClick}>
-        <Plus size={16} style={{ marginRight: 8 }} /> Add New Organization
+        <Plus size={16} className="btn-icon" /> Add New Organization
       </button>
     </div>
-    <div className="team-grid">
-      {orgs.map((o) => (
-        <div key={o.id} className="member-card org-card" onClick={() => onSelect(o)}>
-          <div className="mc-top">
-            <div className="mc-av mc-av-org">
-              <Building size={24} />
+    {orgs.length > 0 ? (
+      <div className="team-grid">
+        {orgs.map((o) => (
+          <div key={o.id} className="member-card org-card" onClick={() => onSelect(o)}>
+            <div className="mc-top">
+              <div className="mc-av mc-av-org">
+                <Building size={24} />
+              </div>
+              <div>
+                <div className="mc-name">{o.name}</div>
+                <div className="mc-role">{o.proposalFileName ? 'Proposal Attached' : 'No Proposal'}</div>
+              </div>
             </div>
-            <div>
-              <div className="mc-name">{o.name}</div>
-              <div className="mc-role">{o.proposalFileName ? 'Proposal Attached' : 'No Proposal'}</div>
+            <div className="mc-footer">
+              <div className="mc-hint">Click to edit templates</div>
+              <ChevronRight size={16} className="mc-arrow" />
             </div>
           </div>
-          <div className="mc-footer">
-            <div className="mc-hint">Click to edit templates</div>
-            <ChevronRight size={16} className="mc-arrow" />
-          </div>
-        </div>
-      ))}
-    </div>
+        ))}
+      </div>
+    ) : (
+      <div className="empty-state">Add your first organization to start managing templates and proposals.</div>
+    )}
   </div>
 );

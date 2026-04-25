@@ -62,38 +62,37 @@ export const JoinOrgModal = ({ onClose, onDiscover, onJoin }: JoinOrgModalProps)
 
   return (
     <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: 500 }}>
+      <div className="modal-content join-org-modal" onClick={e => e.stopPropagation()}>
         <div className="modal-header-between">
           <div className="modal-title">Join Organization</div>
           <button className="close-btn-static" onClick={onClose}><X size={20} /></button>
         </div>
 
-        <div className="srch-wrap" style={{ marginTop: 16, marginBottom: 16 }}>
+        <div className="srch-wrap">
           <Search size={18} className="srch-icon" />
           <input 
             className="srch" 
             placeholder="Search organizations..." 
             value={search}
             onChange={e => setSearch(e.target.value)}
-            style={{ paddingLeft: 40 }}
           />
         </div>
 
-        <div className="org-join-list" style={{ maxHeight: 300, overflowY: 'auto' }}>
+        <div className="org-join-list">
           {loading ? (
             <div className="empty-state">Loading...</div>
           ) : filteredOrgs.length > 0 ? (
             filteredOrgs.map(o => (
-              <div key={o.id} className="org-join-item" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 0', borderBottom: '1px solid var(--border)' }}>
+              <div key={o.id} className="org-join-item">
                 <div className="org-join-info">
-                  <div className="org-join-name" style={{ fontWeight: 600 }}>{o.name}</div>
+                  <div className="org-join-name">{o.name}</div>
                 </div>
                 {requestedIds.includes(o.id!) ? (
-                  <div className="requested-tag" style={{ fontSize: 13, color: 'var(--accent)', fontWeight: 600, display: 'flex', alignItems: 'center', marginLeft: 16 }}>
-                    <Check size={14} style={{ marginRight: 4 }} /> Request Sent!
+                  <div className="requested-tag">
+                    <Check size={14} className="btn-icon" /> Request Sent!
                   </div>
                 ) : (
-                  <button className="create-btn" disabled={pendingId === o.id} onClick={() => void handleRequest(o.id!)} style={{ padding: '8px 16px', fontSize: 13, width: 'auto', marginLeft: 16, flexShrink: 0 }}>
+                  <button className="create-btn org-join-action" disabled={pendingId === o.id} onClick={() => void handleRequest(o.id!)}>
                     {pendingId === o.id ? 'Sending...' : 'Request to Join'}
                   </button>
                 )}
@@ -105,8 +104,8 @@ export const JoinOrgModal = ({ onClose, onDiscover, onJoin }: JoinOrgModalProps)
         </div>
         {error && <div className="error-banner">{error}</div>}
 
-        <div className="modal-footer" style={{ marginTop: 20 }}>
-          <button className="cancel-modal-btn" onClick={onClose} style={{ width: '100%' }}>Close</button>
+        <div className="modal-footer">
+          <button className="cancel-modal-btn join-org-close" onClick={onClose}>Close</button>
         </div>
       </div>
     </div>

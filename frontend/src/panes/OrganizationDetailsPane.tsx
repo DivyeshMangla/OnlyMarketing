@@ -36,6 +36,9 @@ export const OrganizationDetailsPane = ({
 
   const isOwner = org?.members.find(m => m.userId === userProfile?.id)?.role === 'Owner' || userProfile?.role === 'Admin';
   const isAdmin = org?.members.find(m => m.userId === userProfile?.id)?.role === 'Admin' || isOwner;
+  const members = localData.members ?? org?.members ?? [];
+  const pendingMembers = members.filter(m => m.status === 'Pending');
+  const approvedMembers = members.filter(m => m.status === 'Approved');
 
   // ─── Effects ────────────────────────────────────────────────────────────────
   useEffect(() => {
@@ -169,7 +172,7 @@ export const OrganizationDetailsPane = ({
               <div className="pane-tabs">
                 <button className={`p-tab ${activeTab === 'settings' ? 'active' : ''}`} onClick={() => setActiveTab('settings')}>Settings</button>
                 <button className={`p-tab ${activeTab === 'members' ? 'active' : ''}`} onClick={() => setActiveTab('members')}>
-                  Members {org.members.filter(m => m.status === 'Pending').length > 0 && <span className="p-badge-count">{org.members.filter(m => m.status === 'Pending').length}</span>}
+                  Members {pendingMembers.length > 0 && <span className="p-badge-count">{pendingMembers.length}</span>}
                 </button>
               </div>
             )}
@@ -247,17 +250,17 @@ export const OrganizationDetailsPane = ({
                 
                 {isAdmin && (
                   <button className="save-notes-btn save-settings-btn" onClick={() => void handleSave()} disabled={isSubmitting}>
-                    {isSaved ? <><Check size={14} style={{marginRight: 6}}/> Settings Saved</> : isSubmitting ? 'Saving...' : 'Save Settings'}
+                    {isSaved ? <><Check size={14} className="btn-icon" /> Settings Saved</> : isSubmitting ? 'Saving...' : 'Save Settings'}
                   </button>
                 )}
                 {error && <div className="error-banner">{error}</div>}
               </>
             ) : (
               <div className="pane-members-list">
-                {org.members.filter(m => m.status === 'Pending').length > 0 && (
+                {pendingMembers.length > 0 && (
                   <div className="pane-section">
                     <div className="ps-lbl">Pending Requests</div>
-                    {org.members.filter(m => m.status === 'Pending').map(m => (
+                    {pendingMembers.map(m => (
                       <div key={m.userId} className="member-item-row">
                         <div className="m-info">
                           <div className="m-name">{m.user?.name || 'Unknown'}</div>
@@ -274,12 +277,12 @@ export const OrganizationDetailsPane = ({
                 
                 <div className="pane-section">
                   <div className="ps-lbl">Approved Members</div>
-                  {org.members.filter(m => m.status === 'Approved').map(m => (
+                  {approvedMembers.length > 0 ? approvedMembers.map(m => (
                     <div key={m.userId} className="member-item-row">
                       <div className="m-info">
                         <div className="m-name">{m.user?.name || 'Unknown'} {m.userId === userProfile?.id && '(You)'}</div>
                         <div className="m-role-badge">
-                          {m.role === 'Owner' ? <Shield size={12} style={{marginRight: 4}} /> : <User size={12} style={{marginRight: 4}} />}
+                          {m.role === 'Owner' ? <Shield size={12} className="btn-icon" /> : <User size={12} className="btn-icon" />}
                           {m.role}
                         </div>
                       </div>
@@ -300,14 +303,16 @@ export const OrganizationDetailsPane = ({
                         )}
                       </div>
                     </div>
-                  ))}
+                  )) : (
+                    <div className="ps-notes-empty">No approved members yet.</div>
+                  )}
                 </div>
 
                 {isOwner && (
-                  <div className="pane-footer" style={{ padding: '24px 0 0 0', borderTop: '1px solid rgba(255, 255, 255, 0.05)', marginTop: '24px' }}>
+                  <div className="pane-footer pane-footer-inline">
                     {!isRemovingOrg ? (
                       <button className="remove-contact-btn" onClick={() => setIsRemovingOrg(true)}>
-                        <Trash2 size={16} style={{ marginRight: 8 }} /> Delete Organization
+                        <Trash2 size={16} className="btn-icon" /> Delete Organization
                       </button>
                     ) : (
                       <div className="remove-confirm-row">

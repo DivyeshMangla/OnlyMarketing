@@ -110,7 +110,7 @@ export const MessagePreviewModal = ({ type, template, contact, user, org, onClos
               {isLogging ? 'Opening...' : 'Open in WhatsApp'}
             </button>
           ) : (
-            <button className="create-btn copy-btn" onClick={() => void handleCopy()} disabled={isLogging}>
+            <button className="copy-msg-btn copy-btn" onClick={() => void handleCopy()} disabled={isLogging}>
               {isCopied ? <><Check size={18} /> Copied!</> : <><Copy size={18} /> Copy Message</>}
             </button>
           )}

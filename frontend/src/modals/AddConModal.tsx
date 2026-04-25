@@ -1,5 +1,6 @@
 // AddConModal.tsx — Modal component; providing a form to create a new contact entry.
 import { useState } from 'react';
+import { X } from 'lucide-react';
 import type { CreateContactPayload } from '../types';
 
 interface AddConModalProps {
@@ -36,7 +37,12 @@ export const AddConModal = ({ onClose, onAdd, hasOrg }: AddConModalProps) => {
   return (
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal-content" onClick={e => e.stopPropagation()}>
-        <div className="modal-title">New Contact</div>
+        <div className="modal-header-between">
+          <div className="modal-title">New Contact</div>
+          <button className="close-btn-static" onClick={onClose} aria-label="Close">
+            <X size={20} />
+          </button>
+        </div>
         
         <form onSubmit={handleSubmit} className="modal-form">
           <div className="form-group">

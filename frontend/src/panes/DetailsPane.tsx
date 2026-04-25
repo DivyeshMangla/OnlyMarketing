@@ -94,24 +94,26 @@ export const DetailsPane = ({ contact, onClose, onNotesChange, onRemove, onStatu
               </div>
             </div>
             <div className="pane-status-row">
-              <div className="status-selector" onClick={() => setShowStatusDropdown(!showStatusDropdown)}>
-                <Badge status={contact.status} />
+              <div className="status-control">
+                <div className="status-selector" onClick={() => setShowStatusDropdown(!showStatusDropdown)}>
+                  <Badge status={contact.status} />
+                </div>
+                {showStatusDropdown && (
+                  <div className="status-dropdown">
+                    {STATUS_OPTIONS.map(s => (
+                      <div 
+                        key={s} 
+                        className={`status-option ${contact.status === s ? 'active' : ''}`} 
+                        onClick={() => void handleStatusSelect(s)}
+                      >
+                        <div className={`status-dot ${s.toLowerCase().replace(/ /g, '-')}`} />
+                        {s}
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
               <div className="added-by">Added by {contact.addedBy}</div>
-              {showStatusDropdown && (
-                <div className="status-dropdown">
-                  {STATUS_OPTIONS.map(s => (
-                    <div 
-                      key={s} 
-                      className={`status-option ${contact.status === s ? 'active' : ''}`} 
-                      onClick={() => void handleStatusSelect(s)}
-                    >
-                      <div className={`status-dot ${s.toLowerCase().replace(/ /g, '-')}`} />
-                      {s}
-                    </div>
-                  ))}
-                </div>
-              )}
             </div>
           </div>
           <div className="pane-content">
@@ -141,31 +143,35 @@ export const DetailsPane = ({ contact, onClose, onNotesChange, onRemove, onStatu
                 onChange={(e) => setLocalNotes(e.target.value)} 
               />
               <button className="save-notes-btn" onClick={() => void handleSave()} disabled={isSubmitting}>
-                {isSaved ? <><Check size={14} style={{marginRight: 6}}/> Saved</> : isSubmitting ? 'Saving...' : 'Save Notes'}
+                {isSaved ? <><Check size={14} className="btn-icon" /> Saved</> : isSubmitting ? 'Saving...' : 'Save Notes'}
               </button>
               {error && <div className="error-banner">{error}</div>}
             </div>
             <div className="pane-section pane-activity-section">
               <div className="ps-lbl">Activity Log</div>
-              <div className="activity-list">
-                {(contact.activity || []).map((a: Activity, i: number) => (
-                  <div key={i} className="activity-item">
-                    <div className="a-icon-wrap">
-                      <Clock size={12} />
+              {(contact.activity || []).length > 0 ? (
+                <div className="activity-list">
+                  {(contact.activity || []).map((a: Activity, i: number) => (
+                    <div key={i} className="activity-item">
+                      <div className="a-icon-wrap">
+                        <Clock size={12} />
+                      </div>
+                      <div className="a-info">
+                        <div className="a-desc"><strong>{a.type}:</strong> {a.desc}</div>
+                        <div className="a-date">{a.date} • {a.performedBy}</div>
+                      </div>
                     </div>
-                    <div className="a-info">
-                      <div className="a-desc"><strong>{a.type}:</strong> {a.desc}</div>
-                      <div className="a-date">{a.date} • {a.performedBy}</div>
-                    </div>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="ps-notes-empty">No outreach activity has been logged yet.</div>
+              )}
             </div>
           </div>
           <div className="pane-footer">
             {!isConfirmingRemove ? (
               <button className="remove-contact-btn" onClick={() => setIsConfirmingRemove(true)}>
-                <Trash2 size={16} style={{ marginRight: 8, verticalAlign: 'middle' }} />
+                <Trash2 size={16} className="btn-icon" />
                 Remove Contact
               </button>
             ) : (

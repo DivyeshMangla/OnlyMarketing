@@ -48,11 +48,12 @@ export const AllContacts = ({ contacts, onSelect, onAddClick }: AllContactsProps
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
-          <div className="fbtn">
-            Status <ChevronRight size={14} style={{ transform: 'rotate(90deg)' }} />
-          </div>
+          <button type="button" className="fbtn" disabled>
+            Status
+            <ChevronRight size={14} className="chevron-icon chevron-icon-open" />
+          </button>
           <button className="add-btn ml-auto" onClick={onAddClick}>
-            <Plus size={16} style={{ marginRight: 8 }} /> Add Contact
+            <Plus size={16} className="btn-icon" /> Add Contact
           </button>
         </div>
         

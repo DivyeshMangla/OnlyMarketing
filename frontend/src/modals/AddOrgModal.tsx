@@ -1,5 +1,6 @@
 // AddOrgModal.tsx — Modal component; provides a simple form to initialize a new organization.
 import { useState } from 'react';
+import { X } from 'lucide-react';
 
 interface AddOrgModalProps {
   onClose: () => void;
@@ -20,7 +21,12 @@ export const AddOrgModal = ({ onClose, onAdd }: AddOrgModalProps) => {
   return (
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal-content" onClick={e => e.stopPropagation()}>
-        <div className="modal-title">New Organization</div>
+        <div className="modal-header-between">
+          <div className="modal-title">New Organization</div>
+          <button className="close-btn-static" onClick={onClose} aria-label="Close">
+            <X size={20} />
+          </button>
+        </div>
         <form onSubmit={handleSubmit} className="modal-form">
           <div className="form-group">
             <label className="form-label">Organization Name</label>

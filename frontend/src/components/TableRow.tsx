@@ -1,5 +1,6 @@
 import type { Contact } from '../types';
 import { Badge } from './Badge';
+import { getInitials } from '../lib/userUtils';
 
 interface TableRowProps {
   contact: Contact;
@@ -7,10 +8,13 @@ interface TableRowProps {
 }
 
 export const TableRow = ({ contact, onClick }: TableRowProps) => {
+  const initials = getInitials(contact.name);
+
   return (
     <div className="tbl-row ac clickable" onClick={onClick}>
       <div className="td">
         <div className="contact-cell">
+          <div className={`c-av ${contact.mine ? 'mine' : 'shared'}`}>{initials}</div>
           <div>
             <div className="c-name">{contact.name}</div>
             <div className="c-co">{contact.position} at {contact.co}</div>
