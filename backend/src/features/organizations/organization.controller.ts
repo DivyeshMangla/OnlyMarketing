@@ -57,7 +57,7 @@ export async function submitJoinRequest(req: Request, res: Response): Promise<vo
  * Allowed for Owner or Org Admin.
  */
 export async function editOrg(req: Request, res: Response): Promise<void> {
-  const org = await getAllOrgs(req.user._id, true).then(orgs => orgs.find(o => o.id === req.params.id));
+  const org = await getAllOrgs(req.user._id, true).then(orgs => orgs.find(o => o._id.toString() === req.params.id));
   if (!org) throw new AppError('Organization not found', 404);
 
   const member = org.members.find(m => m.userId.toString() === req.user._id.toString());
@@ -77,7 +77,7 @@ export async function editOrg(req: Request, res: Response): Promise<void> {
  * Updates a member status or role. Only Owner can do this.
  */
 export async function updateMemberStatus(req: Request, res: Response): Promise<void> {
-  const org = await getAllOrgs(req.user._id, true).then(orgs => orgs.find(o => o.id === req.params.id));
+  const org = await getAllOrgs(req.user._id, true).then(orgs => orgs.find(o => o._id.toString() === req.params.id));
   if (!org) throw new AppError('Organization not found', 404);
 
   const requester = org.members.find(m => m.userId.toString() === req.user._id.toString());
@@ -85,7 +85,7 @@ export async function updateMemberStatus(req: Request, res: Response): Promise<v
     throw new AppError('Only the organization owner can manage members', 403);
   }
 
-  const { userId } = req.params;
+  const userId = req.params.userId as string;
   const { status, role } = req.body as { status?: MemberStatus; role?: OrgRole };
   const updated = await updateMember(req.params.id as string, userId, { status, role });
   sendSuccess(res, updated, 'Member updated');
@@ -95,7 +95,7 @@ export async function updateMemberStatus(req: Request, res: Response): Promise<v
  * Removes a member or rejects request. Only Owner can do this.
  */
 export async function deleteMember(req: Request, res: Response): Promise<void> {
-  const org = await getAllOrgs(req.user._id, true).then(orgs => orgs.find(o => o.id === req.params.id));
+  const org = await getAllOrgs(req.user._id, true).then(orgs => orgs.find(o => o._id.toString() === req.params.id));
   if (!org) throw new AppError('Organization not found', 404);
 
   const requester = org.members.find(m => m.userId.toString() === req.user._id.toString());
@@ -103,7 +103,7 @@ export async function deleteMember(req: Request, res: Response): Promise<void> {
     throw new AppError('Only the organization owner can remove members', 403);
   }
 
-  const { userId } = req.params;
+  const userId = req.params.userId as string;
   const updated = await removeMember(req.params.id as string, userId);
   sendSuccess(res, updated, 'Member removed');
 }

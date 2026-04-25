@@ -1,5 +1,6 @@
 // contact.controller.ts — Controller for contact management; handles CRUD operations for outreach contacts.
 import { Request, Response } from 'express';
+import { Types } from 'mongoose';
 import { AppError } from '../../shared/errorHandler';
 import { sendSuccess } from '../../shared/response';
 import {
@@ -16,7 +17,7 @@ import { UserRole } from '../auth/auth.types';
 /**
  * Helper to verify if a user has access to an organization.
  */
-async function verifyOrgAccess(orgId: string, userId: string, role: string): Promise<void> {
+async function verifyOrgAccess(orgId: string, userId: string | Types.ObjectId, role: string): Promise<void> {
   if (role === UserRole.Admin) return;
   if (orgId === 'none') return; // Personal contacts are always accessible
 
