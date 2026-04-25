@@ -18,6 +18,15 @@ export async function getContactsByOrg(orgId: string): Promise<IContact[]> {
     .lean(); // Returns plain JS objects (saves ~70% memory per object)
 }
 
+/**
+ * Retrieves a single contact with full details (including activity).
+ * @param id - Contact ID
+ * @returns Contact document or null
+ */
+export async function getContactById(id: string | Types.ObjectId): Promise<IContact | null> {
+  return Contact.findById(id).lean();
+}
+
 // ─── Mutations ────────────────────────────────────────────────────────────────
 
 /**

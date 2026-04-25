@@ -108,7 +108,7 @@ export const DetailsPane = ({ contact, onClose, onNotesChange, onRemove, onStatu
             <div className="pane-section pane-activity-section">
               <div className="ps-lbl">Activity Log</div>
               <div className="activity-list">
-                {contact.activity.map((a: Activity, i: number) => (
+                {(contact.activity || []).map((a: Activity, i: number) => (
                   <div key={i} className="activity-item">
                     <div className="a-icon-wrap">
                       <Clock size={12} />

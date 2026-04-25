@@ -4,6 +4,7 @@ import { AppError } from '../../shared/errorHandler';
 import { sendSuccess } from '../../shared/response';
 import {
   getContactsByOrg,
+  getContactById,
   createContact,
   updateContact,
   deleteContact,
@@ -18,6 +19,17 @@ import { CreateContactBody, UpdateContactBody } from './contact.types';
 export async function getByOrg(req: Request, res: Response): Promise<void> {
   const contacts = await getContactsByOrg(req.params.orgId as string);
   sendSuccess(res, contacts);
+}
+
+/**
+ * Retrieves full details for a single contact.
+ * @param req - Express Request
+ * @param res - Express Response
+ */
+export async function getById(req: Request, res: Response): Promise<void> {
+  const contact = await getContactById(req.params.id as string);
+  if (!contact) throw new AppError('Contact not found', 404);
+  sendSuccess(res, contact);
 }
 
 /**

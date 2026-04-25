@@ -63,12 +63,20 @@ export const useContacts = (activeOrgId: string | null) => {
     setContacts(prev => prev.filter(c => c.id !== id));
   };
 
+  const fetchContactDetails = async (id: string) => {
+    const fullContact = await contactsApi.getById(id);
+    // Update local state with the full document so we don't have to fetch again
+    setContacts(prev => prev.map(c => c.id === id ? fullContact : c));
+    return fullContact;
+  };
+
   return {
     contacts,
     loading,
     fetchContacts,
     addContact,
     updateContact,
-    removeContact
+    removeContact,
+    fetchContactDetails
   };
 };

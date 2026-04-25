@@ -51,7 +51,7 @@ export default function App() {
   const [showOrgDropdown, setShowOrgDropdown] = useState(false);
 
   const { organizations, fetchOrganizations, addOrg, updateOrg } = useOrganizations();
-  const { contacts, fetchContacts, addContact, updateContact, removeContact } = useContacts(activeOrgId);
+  const { contacts, fetchContacts, addContact, updateContact, removeContact, fetchContactDetails } = useContacts(activeOrgId);
   const { team, fetchTeam, toggleAdmin, removeMember } = useTeam();
 
   const [selectedContactId, setSelectedContactId] = useState<string | null>(null);
@@ -107,6 +107,13 @@ export default function App() {
     const targetOrgId = activeOrgId || 'none';
     await addContact({ ...data, orgId: targetOrgId });
     setShowAddModal(false);
+  };
+
+  const handleSelectContact = (id: string | null) => {
+    setSelectedContactId(id);
+    if (id) {
+      fetchContactDetails(id);
+    }
   };
 
   const handleAddOrg = async (name: string) => {
@@ -190,15 +197,15 @@ export default function App() {
       </aside>
 
       <main className="main">
-        {activePage === 'dashboard' && <Dashboard contacts={processedContacts} onSelect={setSelectedContactId} onAddClick={() => setShowAddModal(true)} />}
-        {activePage === 'analytics' && <AllContacts contacts={processedContacts} onSelect={setSelectedContactId} onAddClick={() => setShowAddModal(true)} />}
+        {activePage === 'dashboard' && <Dashboard contacts={processedContacts} onSelect={handleSelectContact} onAddClick={() => setShowAddModal(true)} />}
+        {activePage === 'analytics' && <AllContacts contacts={processedContacts} onSelect={handleSelectContact} onAddClick={() => setShowAddModal(true)} />}
         {activePage === 'team' && <TeamMembers team={team} onViewProfile={(m) => setViewingMemberId(m.id)} />}
         {activePage === 'organizations' && <Organizations orgs={organizations} onSelect={(o) => setSelectedOrgId(o.id)} onAddClick={() => setShowAddOrgModal(true)} />}
       </main>
 
       <DetailsPane 
         contact={selectedContact} 
-        onClose={() => setSelectedContactId(null)} 
+        onClose={() => handleSelectContact(null)} 
         onNotesChange={(notes) => updateContact(selectedContactId!, { notes })} 
         onRemove={removeContact} 
         onStatusChange={(status) => updateContact(selectedContactId!, { status })} 
