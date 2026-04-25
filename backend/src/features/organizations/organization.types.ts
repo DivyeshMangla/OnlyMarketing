@@ -5,7 +5,7 @@ export type OrgRole = 'Owner' | 'Admin' | 'Member';
 export type MemberStatus = 'Pending' | 'Approved';
 
 export interface IOrgMember {
-  userId: Types.ObjectId;
+  userId: any; // Can be ObjectId or populated User object
   role: OrgRole;
   status: MemberStatus;
 }

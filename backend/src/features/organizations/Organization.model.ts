@@ -35,6 +35,20 @@ const organizationSchema = new Schema<IOrganization>(
       virtuals: true,
       transform: (_, ret: any) => {
         ret.id = ret._id.toString();
+        
+        if (ret.members) {
+          ret.members = ret.members.map((m: any) => {
+            if (m.userId && typeof m.userId === 'object' && m.userId.name) {
+              return {
+                ...m,
+                user: { name: m.userId.name, email: m.userId.email },
+                userId: m.userId._id.toString()
+              };
+            }
+            return m;
+          });
+        }
+
         delete ret._id;
         delete ret.__v;
       },
