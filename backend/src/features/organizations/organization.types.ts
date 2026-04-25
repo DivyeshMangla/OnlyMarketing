@@ -12,6 +12,7 @@ export interface IOrgMember {
 
 export interface IOrganization extends Document {
   _id: Types.ObjectId;
+  id: string; // Added for type safety after toJSON transform
   name: string;
   proposalFileName: string;
   proposalData: string;

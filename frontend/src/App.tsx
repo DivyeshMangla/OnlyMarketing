@@ -204,7 +204,9 @@ export default function App() {
               <button className={`sidebar-item ${activePage === 'team' ? 'active' : ''}`} onClick={() => { setActivePage('team'); setSelectedContactId(null); setSelectedOrgId(null); }}><Users />{expanded && <span className="sidebar-label">Team Members</span>}</button>
             </>
           )}
-          <button className={`sidebar-item ${activePage === 'organizations' ? 'active' : ''}`} onClick={() => { setActivePage('organizations'); setSelectedContactId(null); setSelectedOrgId(null); }}><Building />{expanded && <span className="sidebar-label">Organizations</span>}</button>
+          {(userProfile?.role === 'Admin' || organizations.some(o => o.members.some(m => m.userId === userProfile?.id && (m.role === 'Owner' || m.role === 'Admin')))) && (
+            <button className={`sidebar-item ${activePage === 'organizations' ? 'active' : ''}`} onClick={() => { setActivePage('organizations'); setSelectedContactId(null); setSelectedOrgId(null); }}><Building />{expanded && <span className="sidebar-label">Organizations</span>}</button>
+          )}
         </nav>
         <div className="s-spacer" />
         <div className="sidebar-item sidebar-user-btn" onClick={() => setShowProfileModal(true)}>
