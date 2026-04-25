@@ -52,11 +52,35 @@ export const useOrganizations = () => {
     return updated;
   };
 
+  const discoverOrgs = async () => {
+    return await organizationsApi.discover();
+  };
+
+  const joinRequest = async (id: string) => {
+    await organizationsApi.requestJoin(id);
+  };
+
+  const updateMember = async (orgId: string, userId: string, status?: MemberStatus, role?: OrgRole) => {
+    const updated = await organizationsApi.updateMember(orgId, userId, { status, role });
+    setOrganizations(prev => prev.map(o => o.id === orgId ? updated : o));
+    return updated;
+  };
+
+  const removeMember = async (orgId: string, userId: string) => {
+    const updated = await organizationsApi.removeMember(orgId, userId);
+    setOrganizations(prev => prev.map(o => o.id === orgId ? updated : o));
+    return updated;
+  };
+
   return {
     organizations,
     loading,
     fetchOrganizations,
     addOrg,
-    updateOrg
+    updateOrg,
+    discoverOrgs,
+    joinRequest,
+    updateMember,
+    removeMember
   };
 };

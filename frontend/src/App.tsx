@@ -35,6 +35,7 @@ import { AddConModal } from './modals/AddConModal';
 import { ProfModal } from './modals/ProfModal';
 import { TeamMod } from './modals/TeamMod';
 import { MessagePreviewModal } from './modals/MessagePreviewModal';
+import { JoinOrgModal } from './modals/JoinOrgModal';
 import { DetailsPane } from './panes/DetailsPane';
 import { OrganizationDetailsPane } from './panes/OrganizationDetailsPane';
 
@@ -50,7 +51,16 @@ export default function App() {
   const [activeOrgId, setActiveOrgId] = useState<string | null>(null);
   const [showOrgDropdown, setShowOrgDropdown] = useState(false);
 
-  const { organizations, fetchOrganizations, addOrg, updateOrg } = useOrganizations();
+  const { 
+    organizations, 
+    fetchOrganizations, 
+    addOrg, 
+    updateOrg, 
+    discoverOrgs, 
+    joinRequest, 
+    updateMember: updateOrgMember, 
+    removeMember: removeOrgMember 
+  } = useOrganizations();
   const { contacts, fetchContacts, addContact, updateContact, removeContact, fetchContactDetails } = useContacts(activeOrgId);
   const { team, fetchTeam, toggleAdmin, removeMember } = useTeam();
 
@@ -58,6 +68,7 @@ export default function App() {
   const [selectedOrgId, setSelectedOrgId] = useState<string | null>(null);
   const [showAddModal, setShowAddModal] = useState(false);
   const [showAddOrgModal, setShowAddOrgModal] = useState(false);
+  const [showJoinModal, setShowJoinModal] = useState(false);
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [viewingMemberId, setViewingMemberId] = useState<string | null>(null);
   const [activePreview, setActivePreview] = useState<MessagePreviewState | null>(null);
@@ -166,6 +177,12 @@ export default function App() {
                       {o.name}
                     </div>
                   ))}
+                  <div 
+                    className="org-option org-add-new" 
+                    onClick={(e) => { e.stopPropagation(); setShowJoinModal(true); setShowOrgDropdown(false); }}
+                  >
+                    + Join New
+                  </div>
                   {userProfile?.role === 'Admin' && (
                     <div 
                       className="org-option org-add-new" 
@@ -214,12 +231,16 @@ export default function App() {
       
       <OrganizationDetailsPane 
         org={editingOrg} 
+        userProfile={userProfile}
         onClose={() => setSelectedOrgId(null)} 
         onUpdate={updateOrg} 
+        onUpdateMember={updateOrgMember}
+        onRemoveMember={removeOrgMember}
       />
       
       {showAddModal && <AddConModal onClose={() => setShowAddModal(false)} onAdd={handleAddContact} hasOrg={true} />}
       {showAddOrgModal && <AddOrgModal onClose={() => setShowAddOrgModal(false)} onAdd={handleAddOrg} />}
+      {showJoinModal && <JoinOrgModal onClose={() => setShowJoinModal(false)} onDiscover={discoverOrgs} onJoin={joinRequest} />}
       {showProfileModal && userProfile && <ProfModal profile={userProfile} onClose={() => setShowProfileModal(false)} onSave={updateProfile} onLogout={logout} />}
       
       {viewingMember && (

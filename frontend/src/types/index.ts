@@ -38,12 +38,26 @@ export interface TeamMember {
 }
 
 export interface UserProfile {
+  id: string;
   name: string;
   position: UserPosition;
   phone: string;
   email: string;
   birth: string;
   role: UserRole;
+}
+
+export type OrgRole = 'Owner' | 'Admin' | 'Member';
+export type MemberStatus = 'Pending' | 'Approved';
+
+export interface OrgMember {
+  userId: string;
+  user?: {
+    name: string;
+    email: string;
+  };
+  role: OrgRole;
+  status: MemberStatus;
 }
 
 export interface Organization {
@@ -54,6 +68,7 @@ export interface Organization {
   emailTemplate: string;
   whatsappTemplate: string;
   instaTemplate: string;
+  members: OrgMember[];
 }
 
 export interface CreateContactPayload {

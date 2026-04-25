@@ -1,25 +1,96 @@
 // organization.service.ts — Data access layer for all organization-related MongoDB queries.
 import { Types } from 'mongoose';
 import { Organization } from './Organization.model';
-import { IOrganization, CreateOrgBody, UpdateOrgBody } from './organization.types';
+import { IOrganization, CreateOrgBody, UpdateOrgBody, OrgRole, MemberStatus } from './organization.types';
 
 /**
- * Retrieves all organization documents sorted by creation date.
+ * Retrieves organizations for a user. Admins get all, others get only approved memberships.
+ * @param userId - Requesting user's ID
+ * @param isAdmin - Whether the user is a system admin
  * @returns Array of organization documents
  */
-export async function getAllOrgs(): Promise<IOrganization[]> {
-  return Organization.find().sort({ createdAt: 1 });
+export async function getAllOrgs(userId: string | Types.ObjectId, isAdmin: boolean = false): Promise<IOrganization[]> {
+  const query = isAdmin ? {} : { 'members': { $elemMatch: { userId, status: 'Approved' } } };
+  return Organization.find(query).populate('members.userId', 'name email').sort({ createdAt: 1 });
 }
 
 /**
- * Creates and persists a new organization.
+ * Lightweight list of organizations for discovery.
+ * @param userId - User ID to exclude orgs they already joined
+ * @returns Simple org objects
+ */
+export async function getDiscoverOrgs(userId: string | Types.ObjectId): Promise<Partial<IOrganization>[]> {
+  return Organization.find({ 'members.userId': { $ne: userId } })
+    .select('name _id')
+    .sort({ name: 1 })
+    .lean();
+}
+
+/**
+ * Creates and persists a new organization, setting the creator as Approved Owner.
  * @param data - Organization creation details
+ * @param ownerId - ID of the creating user
  * @returns Newly created organization document
  */
-export async function createOrg(data: CreateOrgBody): Promise<IOrganization> {
-  const org = new Organization(data);
+export async function createOrg(data: CreateOrgBody, ownerId: string | Types.ObjectId): Promise<IOrganization> {
+  const org = new Organization({
+    ...data,
+    members: [{
+      userId: ownerId,
+      role: 'Owner',
+      status: 'Approved'
+    }]
+  });
   await org.save();
-  return org;
+  return Organization.findById(org._id).populate('members.userId', 'name email') as unknown as IOrganization;
+}
+
+/**
+ * Submits a join request for an organization.
+ * @param orgId - Organization ID
+ * @param userId - Requesting user's ID
+ */
+export async function requestJoin(orgId: string | Types.ObjectId, userId: string | Types.ObjectId): Promise<IOrganization | null> {
+  return Organization.findByIdAndUpdate(
+    orgId,
+    { $addToSet: { members: { userId, role: 'Member', status: 'Pending' } } },
+    { new: true }
+  ).populate('members.userId', 'name email');
+}
+
+/**
+ * Updates a member's status or role.
+ * @param orgId - Organization ID
+ * @param userId - Member user ID
+ * @param updates - Partial status or role updates
+ */
+export async function updateMember(
+  orgId: string | Types.ObjectId,
+  userId: string | Types.ObjectId,
+  updates: { status?: MemberStatus; role?: OrgRole }
+): Promise<IOrganization | null> {
+  const org = await Organization.findById(orgId);
+  if (!org) return null;
+
+  const member = org.members.find(m => m.userId.toString() === userId.toString());
+  if (!member) return null;
+
+  if (updates.status) member.status = updates.status;
+  if (updates.role) member.role = updates.role;
+
+  await org.save();
+  return Organization.findById(orgId).populate('members.userId', 'name email');
+}
+
+/**
+ * Removes a member or rejects a request.
+ */
+export async function removeMember(orgId: string | Types.ObjectId, userId: string | Types.ObjectId): Promise<IOrganization | null> {
+  return Organization.findByIdAndUpdate(
+    orgId,
+    { $pull: { members: { userId } } },
+    { new: true }
+  ).populate('members.userId', 'name email');
 }
 
 /**
@@ -35,5 +106,5 @@ export async function updateOrg(
   return Organization.findByIdAndUpdate(id, updates, {
     new: true,
     runValidators: true,
-  });
+  }).populate('members.userId', 'name email');
 }

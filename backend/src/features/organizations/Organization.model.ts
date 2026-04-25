@@ -1,6 +1,23 @@
 // Organization.model.ts — Mongoose schema and model definition for the Organization entity.
 import mongoose, { Schema } from 'mongoose';
-import { IOrganization } from './organization.types';
+import { IOrganization, OrgRole, MemberStatus } from './organization.types';
+
+const memberSchema = new Schema(
+  {
+    userId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+    role: { 
+      type: String, 
+      enum: ['Owner', 'Admin', 'Member'], 
+      default: 'Member' 
+    },
+    status: { 
+      type: String, 
+      enum: ['Pending', 'Approved'], 
+      default: 'Pending' 
+    },
+  },
+  { _id: false }
+);
 
 const organizationSchema = new Schema<IOrganization>(
   {
@@ -10,6 +27,7 @@ const organizationSchema = new Schema<IOrganization>(
     emailTemplate: { type: String, default: '' },
     whatsappTemplate: { type: String, default: '' },
     instaTemplate: { type: String, default: '' },
+    members: [memberSchema],
   },
   { 
     timestamps: true,

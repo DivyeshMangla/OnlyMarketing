@@ -13,4 +13,21 @@ export const organizationsApi = {
     method: 'PUT',
     data,
   }),
+
+  discover: () => apiClient<Partial<Organization>[]>('/orgs/discover'),
+
+  requestJoin: (id: string) => apiClient<void>(`/orgs/${id}/request`, {
+    method: 'POST',
+  }),
+
+  updateMember: (orgId: string, userId: string, data: { status?: MemberStatus; role?: OrgRole }) => 
+    apiClient<Organization>(`/orgs/${orgId}/members/${userId}`, {
+      method: 'PUT',
+      data,
+    }),
+
+  removeMember: (orgId: string, userId: string) => 
+    apiClient<Organization>(`/orgs/${orgId}/members/${userId}`, {
+      method: 'DELETE',
+    }),
 };

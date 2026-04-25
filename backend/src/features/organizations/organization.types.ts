@@ -1,6 +1,15 @@
 // organization.types.ts — TypeScript interfaces for organization documents and requests.
 import { Document, Types } from 'mongoose';
 
+export type OrgRole = 'Owner' | 'Admin' | 'Member';
+export type MemberStatus = 'Pending' | 'Approved';
+
+export interface IOrgMember {
+  userId: Types.ObjectId;
+  role: OrgRole;
+  status: MemberStatus;
+}
+
 export interface IOrganization extends Document {
   _id: Types.ObjectId;
   name: string;
@@ -9,6 +18,7 @@ export interface IOrganization extends Document {
   emailTemplate: string;
   whatsappTemplate: string;
   instaTemplate: string;
+  members: IOrgMember[];
   createdAt: Date;
   updatedAt: Date;
 }
