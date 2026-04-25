@@ -66,7 +66,11 @@ export async function createContact(
     ],
   });
   await contact.save();
-  return contact;
+  return {
+    ...contact.toObject(),
+    id: contact._id.toString(),
+    date: new Date(contact.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+  } as unknown as IContact;
 }
 
 /**

@@ -8,7 +8,8 @@ import { IUser, UserRole } from '../auth/auth.types';
  * @returns Array of user documents
  */
 export async function getAllTeamMembers(): Promise<IUser[]> {
-  return User.find().select('-password').sort({ createdAt: 1 });
+  const users = await User.find().select('-password').sort({ createdAt: 1 });
+  return users.map(u => u.toJSON()) as unknown as IUser[];
 }
 
 /**
@@ -21,11 +22,12 @@ export async function updateUserRole(
   id: string | Types.ObjectId,
   role: UserRole
 ): Promise<IUser | null> {
-  return User.findByIdAndUpdate(
+  const updated = await User.findByIdAndUpdate(
     id,
     { role },
     { new: true, runValidators: true }
   ).select('-password');
+  return updated?.toJSON() || null;
 }
 
 /**
