@@ -59,7 +59,8 @@ export default function App() {
     discoverOrgs, 
     joinRequest, 
     updateMember: updateOrgMember, 
-    removeMember: removeOrgMember 
+    removeMember: removeOrgMember,
+    removeOrg
   } = useOrganizations();
   const { contacts, fetchContacts, addContact, updateContact, removeContact, fetchContactDetails } = useContacts(activeOrgId);
   const { team, fetchTeam, toggleAdmin, removeMember } = useTeam();
@@ -238,6 +239,7 @@ export default function App() {
         onUpdate={updateOrg} 
         onUpdateMember={updateOrgMember}
         onRemoveMember={removeOrgMember}
+        onRemoveOrg={removeOrg}
       />
       
       {showAddModal && <AddConModal onClose={() => setShowAddModal(false)} onAdd={handleAddContact} hasOrg={true} />}

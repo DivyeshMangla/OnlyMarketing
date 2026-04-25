@@ -66,10 +66,15 @@ export const useOrganizations = () => {
     return updated;
   };
 
-  const removeMember = async (orgId: string, userId: string) => {
+  const removeOrgMember = async (orgId: string, userId: string) => {
     const updated = await organizationsApi.removeMember(orgId, userId);
     setOrganizations(prev => prev.map(o => o.id === orgId ? updated : o));
     return updated;
+  };
+
+  const removeOrg = async (id: string) => {
+    await organizationsApi.remove(id);
+    setOrganizations(prev => prev.filter(o => o.id !== id));
   };
 
   return {
@@ -81,6 +86,7 @@ export const useOrganizations = () => {
     discoverOrgs,
     joinRequest,
     updateMember,
-    removeMember
+    removeMember,
+    removeOrg
   };
 };

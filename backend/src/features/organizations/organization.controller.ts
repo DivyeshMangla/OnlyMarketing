@@ -9,7 +9,8 @@ import {
   getDiscoverOrgs, 
   requestJoin, 
   updateMember, 
-  removeMember 
+  removeMember,
+  deleteOrg
 } from './organization.service';
 import { CreateOrgBody, UpdateOrgBody, OrgRole, MemberStatus } from './organization.types';
 import { UserRole } from '../auth/auth.types';
@@ -106,4 +107,20 @@ export async function deleteMember(req: Request, res: Response): Promise<void> {
   const userId = req.params.userId as string;
   const updated = await removeMember(req.params.id as string, userId);
   sendSuccess(res, updated, 'Member removed');
+}
+
+/**
+ * Deletes an organization. Only Owner can do this.
+ */
+export async function removeOrg(req: Request, res: Response): Promise<void> {
+  const org = await getAllOrgs(req.user._id, true).then(orgs => orgs.find(o => o.id === req.params.id));
+  if (!org) throw new AppError('Organization not found', 404);
+
+  const requester = org.members.find(m => m.userId.toString() === req.user._id.toString());
+  if (requester?.role !== 'Owner' && req.user.role !== UserRole.Admin) {
+    throw new AppError('Only the organization owner can delete the organization', 403);
+  }
+
+  await deleteOrg(req.params.id as string);
+  sendSuccess(res, null, 'Organization deleted');
 }

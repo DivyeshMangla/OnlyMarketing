@@ -121,3 +121,13 @@ export async function updateOrg(
   }).populate('members.userId', 'name email');
   return updated?.toJSON() || null;
 }
+
+/**
+ * Permanently deletes an organization and all associated data.
+ * @param id - Organization ID
+ * @returns True if deleted
+ */
+export async function deleteOrg(id: string | Types.ObjectId): Promise<boolean> {
+  const result = await Organization.findByIdAndDelete(id);
+  return result !== null;
+}

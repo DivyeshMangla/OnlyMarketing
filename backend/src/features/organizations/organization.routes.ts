@@ -9,7 +9,8 @@ import {
   discoverOrgs, 
   submitJoinRequest, 
   updateMemberStatus, 
-  deleteMember 
+  deleteMember,
+  removeOrg
 } from './organization.controller';
 
 const router = Router();
@@ -20,6 +21,7 @@ router.post('/', authMiddleware, asyncHandler(addOrg));
 router.post('/:id/request', authMiddleware, asyncHandler(submitJoinRequest));
 router.put('/:id', authMiddleware, asyncHandler(editOrg));
 router.put('/:id/members/:userId', authMiddleware, asyncHandler(updateMemberStatus));
+router.delete('/:id', authMiddleware, asyncHandler(removeOrg));
 router.delete('/:id/members/:userId', authMiddleware, asyncHandler(deleteMember));
 
 export default router;

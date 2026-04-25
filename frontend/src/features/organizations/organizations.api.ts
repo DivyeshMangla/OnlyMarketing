@@ -30,4 +30,8 @@ export const organizationsApi = {
     apiClient<Organization>(`/orgs/${orgId}/members/${userId}`, {
       method: 'DELETE',
     }),
+
+  remove: (id: string) => apiClient<void>(`/orgs/${id}`, {
+    method: 'DELETE',
+  }),
 };
