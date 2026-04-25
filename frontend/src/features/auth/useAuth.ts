@@ -1,9 +1,10 @@
 // useAuth.ts — Custom hook for managing authentication state, profile data, and session persistence.
-import { useEffect, useCallback } from 'react';
+import { useEffect, useCallback, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { UserProfile } from '../../types';
 import { authApi } from './auth.api';
 import { queryKeys } from '../../lib/queryKeys';
+import { ApiError } from '../../lib/apiClient';
 
 /**
  * Hook for global authentication state management.
@@ -11,12 +12,21 @@ import { queryKeys } from '../../lib/queryKeys';
  */
 export const useAuth = () => {
   const queryClient = useQueryClient();
-  const token = localStorage.getItem('token');
+  const [authToken, setAuthToken] = useState<string | null>(() => localStorage.getItem('token'));
+
+  useEffect(() => {
+    const syncToken = () => {
+      setAuthToken(localStorage.getItem('token'));
+    };
+
+    window.addEventListener('storage', syncToken);
+    return () => window.removeEventListener('storage', syncToken);
+  }, []);
 
   const meQuery = useQuery({
     queryKey: queryKeys.auth.me,
     queryFn: authApi.me,
-    enabled: Boolean(token),
+    enabled: Boolean(authToken),
     refetchInterval: 30000,
   });
 
@@ -36,11 +46,16 @@ export const useAuth = () => {
    */
   const logout = useCallback(() => {
     localStorage.removeItem('token');
-    queryClient.clear();
+    setAuthToken(null);
+    queryClient.removeQueries({ queryKey: queryKeys.auth.me });
+    queryClient.removeQueries({ queryKey: queryKeys.organizations.all });
+    queryClient.removeQueries({ queryKey: queryKeys.organizations.discover });
+    queryClient.removeQueries({ queryKey: queryKeys.team.all });
+    queryClient.removeQueries({ queryKey: ['contacts'] });
   }, [queryClient]);
 
   useEffect(() => {
-    if (meQuery.error) {
+    if (meQuery.error instanceof ApiError && [401, 403].includes(meQuery.error.status)) {
       logout();
     }
   }, [meQuery.error, logout]);
@@ -49,7 +64,7 @@ export const useAuth = () => {
    * Fetches the current user profile from the API.
    */
   const refreshUser = useCallback(async () => {
-    if (!localStorage.getItem('token')) {
+    if (!authToken) {
       logout();
       return null;
     }
@@ -66,9 +81,9 @@ export const useAuth = () => {
    * @param user - User profile
    */
   const login = (token: string, user: UserProfile) => {
-    queryClient.clear();
     localStorage.setItem('token', token);
     queryClient.setQueryData(queryKeys.auth.me, user);
+    setAuthToken(token);
   };
 
   /**
@@ -82,8 +97,8 @@ export const useAuth = () => {
 
   return {
     userProfile: meQuery.data ?? null,
-    isAuthenticated: Boolean(token),
-    loading: Boolean(token) && meQuery.isPending,
+    isAuthenticated: Boolean(authToken),
+    loading: Boolean(authToken) && meQuery.isPending && !meQuery.data,
     login,
     logout,
     updateProfile,
