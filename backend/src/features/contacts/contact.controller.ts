@@ -63,7 +63,7 @@ export async function addContact(req: Request, res: Response): Promise<void> {
   const body = req.body as CreateContactBody;
   await verifyOrgAccess(body.orgId, req.user._id, req.user.role);
   
-  const contact = await createContact(body, req.user.name);
+  const contact = await createContact(body, req.user.name, req.user._id);
   sendSuccess(res, contact, 'Contact created', 201);
 }
 
@@ -80,6 +80,7 @@ export async function editContact(req: Request, res: Response): Promise<void> {
 
   const updates = req.body as UpdateContactBody;
   const updated = await updateContact(req.params.id as string, updates, req.user.name);
+  if (!updated) throw new AppError('Contact not found', 404);
   sendSuccess(res, updated, 'Contact updated');
 }
 

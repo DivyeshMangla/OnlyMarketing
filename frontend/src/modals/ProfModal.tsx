@@ -1,5 +1,5 @@
 // ProfModal.tsx — Modal component; allows users to view and update their profile settings and log out.
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import type { UserProfile, UserPosition } from '../types';
 import { ShieldCheck, LogOut } from 'lucide-react';
 import { getInitials } from '../lib/userUtils';
@@ -7,7 +7,7 @@ import { getInitials } from '../lib/userUtils';
 interface ProfModalProps {
   profile: UserProfile;
   onClose: () => void;
-  onSave: (p: Partial<UserProfile>) => void;
+  onSave: (p: Partial<UserProfile>) => Promise<UserProfile | undefined>;
   onLogout: () => void;
 }
 
@@ -17,7 +17,27 @@ interface ProfModalProps {
 export const ProfModal = ({ profile, onClose, onSave, onLogout }: ProfModalProps) => {
   // ─── State ──────────────────────────────────────────────────────────────────
   const [formData, setFormData] = useState(profile);
+  const [isSaving, setIsSaving] = useState(false);
+  const [error, setError] = useState('');
   const initials = getInitials(formData.name);
+
+  useEffect(() => {
+    setFormData(profile);
+    setError('');
+  }, [profile]);
+
+  const handleSave = async () => {
+    try {
+      setIsSaving(true);
+      setError('');
+      await onSave(formData);
+      onClose();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to save profile');
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   // ─── Render ─────────────────────────────────────────────────────────────────
   return (
@@ -95,11 +115,13 @@ export const ProfModal = ({ profile, onClose, onSave, onLogout }: ProfModalProps
             <button 
               type="button" 
               className="create-btn" 
-              onClick={() => { onSave(formData); onClose(); }}
+              disabled={isSaving}
+              onClick={() => void handleSave()}
             >
-              Save Profile
+              {isSaving ? 'Saving...' : 'Save Profile'}
             </button>
           </div>
+          {error && <div className="error-banner">{error}</div>}
 
           <div className="modal-logout-zone">
             <button 

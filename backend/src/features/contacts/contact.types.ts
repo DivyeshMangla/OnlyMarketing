@@ -21,7 +21,7 @@ export type ContactStatus = (typeof ContactStatus)[keyof typeof ContactStatus];
 
 export interface IContact extends Document {
   _id: Types.ObjectId;
-  orgId: Types.ObjectId;
+  orgId?: Types.ObjectId;
   name: string;
   co: string;
   position: string;
@@ -29,6 +29,7 @@ export interface IContact extends Document {
   phone: string;
   status: ContactStatus;
   addedBy: string;
+  addedById?: Types.ObjectId;
   notes: string;
   activity: IActivity[];
   createdAt: Date;

@@ -1,25 +1,49 @@
 // useAuth.ts — Custom hook for managing authentication state, profile data, and session persistence.
-import { useState, useEffect, useCallback } from 'react';
+import { useEffect, useCallback } from 'react';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { UserProfile } from '../../types';
 import { authApi } from './auth.api';
+import { queryKeys } from '../../lib/queryKeys';
 
 /**
  * Hook for global authentication state management.
  * @returns Auth state and mutation methods
  */
 export const useAuth = () => {
-  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
-  const [isAuthenticated, setIsAuthenticated] = useState(!!localStorage.getItem('token'));
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
+  const token = localStorage.getItem('token');
+
+  const meQuery = useQuery({
+    queryKey: queryKeys.auth.me,
+    queryFn: authApi.me,
+    enabled: Boolean(token),
+    refetchInterval: 30000,
+  });
+
+  const updateProfileMutation = useMutation({
+    mutationFn: authApi.updateProfile,
+    onSuccess: async (updated) => {
+      queryClient.setQueryData(queryKeys.auth.me, updated);
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: queryKeys.team.all }),
+        queryClient.invalidateQueries({ queryKey: queryKeys.organizations.all }),
+      ]);
+    },
+  });
 
   /**
    * Clears local session and resets state.
    */
   const logout = useCallback(() => {
     localStorage.removeItem('token');
-    setIsAuthenticated(false);
-    setUserProfile(null);
-  }, []);
+    queryClient.clear();
+  }, [queryClient]);
+
+  useEffect(() => {
+    if (meQuery.error) {
+      logout();
+    }
+  }, [meQuery.error, logout]);
 
   /**
    * Fetches the current user profile from the API.
@@ -27,35 +51,14 @@ export const useAuth = () => {
   const refreshUser = useCallback(async () => {
     if (!localStorage.getItem('token')) {
       logout();
-      return;
+      return null;
     }
-    try {
-      const user = await authApi.me();
-      setUserProfile(user);
-    } catch (err) {
-      logout();
-    } finally {
-      setLoading(false);
+    const result = await meQuery.refetch();
+    if (result.error) {
+      throw result.error;
     }
-  }, [logout]);
-
-  useEffect(() => {
-    if (isAuthenticated) {
-      refreshUser();
-    } else {
-      setLoading(false);
-    }
-  }, [isAuthenticated, refreshUser]);
-
-  // Background sync every 30 seconds
-  useEffect(() => {
-    const interval = setInterval(() => {
-      if (isAuthenticated) {
-        refreshUser();
-      }
-    }, 30000);
-    return () => clearInterval(interval);
-  }, [isAuthenticated, refreshUser]);
+    return result.data ?? null;
+  }, [logout, meQuery]);
 
   /**
    * Initializes a session with token and profile data.
@@ -63,9 +66,9 @@ export const useAuth = () => {
    * @param user - User profile
    */
   const login = (token: string, user: UserProfile) => {
+    queryClient.clear();
     localStorage.setItem('token', token);
-    setUserProfile(user);
-    setIsAuthenticated(true);
+    queryClient.setQueryData(queryKeys.auth.me, user);
   };
 
   /**
@@ -74,15 +77,13 @@ export const useAuth = () => {
    * @returns Updated profile
    */
   const updateProfile = async (updates: Partial<UserProfile>) => {
-    const updated = await authApi.updateProfile(updates);
-    setUserProfile(updated);
-    return updated;
+    return updateProfileMutation.mutateAsync(updates);
   };
 
   return {
-    userProfile,
-    isAuthenticated,
-    loading,
+    userProfile: meQuery.data ?? null,
+    isAuthenticated: Boolean(token),
+    loading: Boolean(token) && meQuery.isPending,
     login,
     logout,
     updateProfile,

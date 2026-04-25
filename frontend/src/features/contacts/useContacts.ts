@@ -1,7 +1,9 @@
 // useContacts.ts — Custom hook for managing contact data; handles fetching, adding, updating, and removing contacts.
-import { useState, useCallback } from 'react';
+import { useCallback } from 'react';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { Contact, CreateContactPayload, ContactStatus } from '../../types';
 import { contactsApi } from './contacts.api';
+import { queryKeys } from '../../lib/queryKeys';
 
 /**
  * Hook for managing contacts scoped to an organization.
@@ -9,27 +11,61 @@ import { contactsApi } from './contacts.api';
  * @returns Contact state and mutation methods
  */
 export const useContacts = (activeOrgId: string | null) => {
-  const [contacts, setContacts] = useState<Contact[]>([]);
-  const [loading, setLoading] = useState(false);
+  const queryClient = useQueryClient();
+  const token = localStorage.getItem('token');
+
+  const contactsQuery = useQuery({
+    queryKey: queryKeys.contacts.list(activeOrgId ?? 'unselected'),
+    queryFn: () => contactsApi.getByOrg(activeOrgId!),
+    enabled: Boolean(token && activeOrgId),
+  });
+
+  const addContactMutation = useMutation({
+    mutationFn: contactsApi.create,
+    onSuccess: async (newContact, payload) => {
+      queryClient.setQueryData<Contact[]>(queryKeys.contacts.list(payload.orgId), (prev = []) => [newContact, ...prev]);
+      queryClient.setQueryData(queryKeys.contacts.detail(newContact.id), newContact);
+      await queryClient.invalidateQueries({ queryKey: queryKeys.contacts.list(payload.orgId) });
+    },
+  });
+
+  const updateContactMutation = useMutation({
+    mutationFn: ({ id, updates }: { id: string; updates: { status?: ContactStatus; notes?: string; newActivity?: { type: string; desc: string } } }) =>
+      contactsApi.update(id, updates),
+    onSuccess: async (updated) => {
+      if (activeOrgId) {
+        queryClient.setQueryData<Contact[]>(queryKeys.contacts.list(activeOrgId), (prev = []) =>
+          prev.map((contact) => (contact.id === updated.id ? updated : contact))
+        );
+        await queryClient.invalidateQueries({ queryKey: queryKeys.contacts.list(activeOrgId) });
+      }
+      queryClient.setQueryData(queryKeys.contacts.detail(updated.id), updated);
+    },
+  });
+
+  const removeContactMutation = useMutation({
+    mutationFn: contactsApi.remove,
+    onSuccess: async (_, id) => {
+      if (activeOrgId) {
+        queryClient.setQueryData<Contact[]>(queryKeys.contacts.list(activeOrgId), (prev = []) =>
+          prev.filter((contact) => contact.id !== id)
+        );
+        await queryClient.invalidateQueries({ queryKey: queryKeys.contacts.list(activeOrgId) });
+      }
+      queryClient.removeQueries({ queryKey: queryKeys.contacts.detail(id) });
+    },
+  });
 
   /**
    * Fetches contacts for the active organization.
    */
   const fetchContacts = useCallback(async () => {
     if (!activeOrgId) {
-      setContacts([]);
-      return;
+      return [];
     }
-    setLoading(true);
-    try {
-      const data = await contactsApi.getByOrg(activeOrgId);
-      setContacts(data);
-    } catch (err) {
-      console.error('Failed to fetch contacts', err);
-    } finally {
-      setLoading(false);
-    }
-  }, [activeOrgId]);
+    const result = await contactsQuery.refetch();
+    return result.data ?? [];
+  }, [activeOrgId, contactsQuery]);
 
   /**
    * Adds a new contact to the database and local state.
@@ -37,9 +73,7 @@ export const useContacts = (activeOrgId: string | null) => {
    * @returns Newly created contact
    */
   const addContact = async (payload: CreateContactPayload) => {
-    const newContact = await contactsApi.create(payload);
-    setContacts(prev => [newContact, ...prev]);
-    return newContact;
+    return addContactMutation.mutateAsync(payload);
   };
 
   /**
@@ -49,9 +83,7 @@ export const useContacts = (activeOrgId: string | null) => {
    * @returns Updated contact
    */
   const updateContact = async (id: string, updates: { status?: ContactStatus; notes?: string; newActivity?: { type: string; desc: string } }) => {
-    const updated = await contactsApi.update(id, updates);
-    setContacts(prev => prev.map(c => c.id === id ? updated : c));
-    return updated;
+    return updateContactMutation.mutateAsync({ id, updates });
   };
 
   /**
@@ -59,20 +91,25 @@ export const useContacts = (activeOrgId: string | null) => {
    * @param id - Contact ID
    */
   const removeContact = async (id: string) => {
-    await contactsApi.remove(id);
-    setContacts(prev => prev.filter(c => c.id !== id));
+    await removeContactMutation.mutateAsync(id);
   };
 
-  const fetchContactDetails = async (id: string) => {
-    const fullContact = await contactsApi.getById(id);
-    // Update local state with the full document so we don't have to fetch again
-    setContacts(prev => prev.map(c => c.id === id ? fullContact : c));
+  const fetchContactDetails = useCallback(async (id: string) => {
+    const fullContact = await queryClient.fetchQuery({
+      queryKey: queryKeys.contacts.detail(id),
+      queryFn: () => contactsApi.getById(id),
+    });
+    if (activeOrgId) {
+      queryClient.setQueryData<Contact[]>(queryKeys.contacts.list(activeOrgId), (prev = []) =>
+        prev.map((contact) => (contact.id === id ? fullContact : contact))
+      );
+    }
     return fullContact;
-  };
+  }, [activeOrgId, queryClient]);
 
   return {
-    contacts,
-    loading,
+    contacts: contactsQuery.data ?? [],
+    loading: contactsQuery.isPending || addContactMutation.isPending || updateContactMutation.isPending || removeContactMutation.isPending,
     fetchContacts,
     addContact,
     updateContact,

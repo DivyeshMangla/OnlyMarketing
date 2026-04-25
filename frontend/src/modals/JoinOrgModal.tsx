@@ -13,17 +13,49 @@ export const JoinOrgModal = ({ onClose, onDiscover, onJoin }: JoinOrgModalProps)
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [requestedIds, setRequestedIds] = useState<string[]>([]);
+  const [error, setError] = useState('');
+  const [pendingId, setPendingId] = useState<string | null>(null);
 
   useEffect(() => {
-    onDiscover().then(data => {
-      setOrgs(data);
-      setLoading(false);
-    });
+    let active = true;
+
+    const loadOrgs = async () => {
+      try {
+        setLoading(true);
+        setError('');
+        const data = await onDiscover();
+        if (active) {
+          setOrgs(data);
+        }
+      } catch (err) {
+        if (active) {
+          setError(err instanceof Error ? err.message : 'Failed to load organizations');
+        }
+      } finally {
+        if (active) {
+          setLoading(false);
+        }
+      }
+    };
+
+    void loadOrgs();
+
+    return () => {
+      active = false;
+    };
   }, [onDiscover]);
 
   const handleRequest = async (id: string) => {
-    await onJoin(id);
-    setRequestedIds(prev => [...prev, id]);
+    try {
+      setPendingId(id);
+      setError('');
+      await onJoin(id);
+      setRequestedIds(prev => [...prev, id]);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to send join request');
+    } finally {
+      setPendingId(null);
+    }
   };
 
   const filteredOrgs = orgs.filter(o => o.name?.toLowerCase().includes(search.toLowerCase()));
@@ -61,8 +93,8 @@ export const JoinOrgModal = ({ onClose, onDiscover, onJoin }: JoinOrgModalProps)
                     <Check size={14} style={{ marginRight: 4 }} /> Request Sent!
                   </div>
                 ) : (
-                  <button className="create-btn" onClick={() => handleRequest(o.id!)} style={{ padding: '8px 16px', fontSize: 13, width: 'auto', marginLeft: 16, flexShrink: 0 }}>
-                    Request to Join
+                  <button className="create-btn" disabled={pendingId === o.id} onClick={() => void handleRequest(o.id!)} style={{ padding: '8px 16px', fontSize: 13, width: 'auto', marginLeft: 16, flexShrink: 0 }}>
+                    {pendingId === o.id ? 'Sending...' : 'Request to Join'}
                   </button>
                 )}
               </div>
@@ -71,6 +103,7 @@ export const JoinOrgModal = ({ onClose, onDiscover, onJoin }: JoinOrgModalProps)
             <div className="empty-state">No organizations found.</div>
           )}
         </div>
+        {error && <div className="error-banner">{error}</div>}
 
         <div className="modal-footer" style={{ marginTop: 20 }}>
           <button className="cancel-modal-btn" onClick={onClose} style={{ width: '100%' }}>Close</button>

@@ -50,7 +50,7 @@ export async function addOrg(req: Request, res: Response): Promise<void> {
 export async function submitJoinRequest(req: Request, res: Response): Promise<void> {
   const org = await requestJoin(req.params.id as string, req.user._id);
   if (!org) throw new AppError('Organization not found', 404);
-  sendSuccess(res, null, 'Join request submitted');
+  sendSuccess(res, org, 'Join request submitted');
 }
 
 /**
@@ -72,6 +72,7 @@ export async function editOrg(req: Request, res: Response): Promise<void> {
 
   const updates = req.body as UpdateOrgBody;
   const updated = await updateOrg(req.params.id as string, updates);
+  if (!updated) throw new AppError('Organization not found', 404);
   sendSuccess(res, updated, 'Organization updated');
 }
 
@@ -91,6 +92,7 @@ export async function updateMemberStatus(req: Request, res: Response): Promise<v
   const userId = req.params.userId as string;
   const { status, role } = req.body as { status?: MemberStatus; role?: OrgRole };
   const updated = await updateMember(req.params.id as string, userId, { status, role });
+  if (!updated) throw new AppError('Member not found', 404);
   sendSuccess(res, updated, 'Member updated');
 }
 
@@ -109,6 +111,7 @@ export async function deleteMember(req: Request, res: Response): Promise<void> {
 
   const userId = req.params.userId as string;
   const updated = await removeMember(req.params.id as string, userId);
+  if (!updated) throw new AppError('Member not found', 404);
   sendSuccess(res, updated, 'Member removed');
 }
 

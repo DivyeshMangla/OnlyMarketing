@@ -20,6 +20,7 @@ export async function getContactsByOrg(orgId: string): Promise<IContact[]> {
   return contacts.map(c => ({ 
     ...c, 
     id: c._id.toString(),
+    addedById: c.addedById ? c.addedById.toString() : undefined,
     date: new Date(c.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
   })) as unknown as IContact[];
 }
@@ -35,6 +36,7 @@ export async function getContactById(id: string | Types.ObjectId): Promise<ICont
   return { 
     ...contact, 
     id: contact._id.toString(),
+    addedById: contact.addedById ? contact.addedById.toString() : undefined,
     date: new Date(contact.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
   } as unknown as IContact;
 }
@@ -49,12 +51,14 @@ export async function getContactById(id: string | Types.ObjectId): Promise<ICont
  */
 export async function createContact(
   data: CreateContactBody,
-  addedByName: string
+  addedByName: string,
+  addedById: string | Types.ObjectId
 ): Promise<IContact> {
   const contact = new Contact({
     ...data,
     orgId: data.orgId === 'none' ? undefined : data.orgId,
     addedBy: addedByName,
+    addedById,
     activity: [
       {
         type: 'Created',
@@ -69,6 +73,7 @@ export async function createContact(
   return {
     ...contact.toObject(),
     id: contact._id.toString(),
+    addedById: contact.addedById ? contact.addedById.toString() : undefined,
     date: new Date(contact.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
   } as unknown as IContact;
 }
@@ -135,6 +140,7 @@ export async function updateContact(
   return { 
     ...updated, 
     id: updated._id.toString(),
+    addedById: updated.addedById ? updated.addedById.toString() : undefined,
     date: new Date(updated.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
   } as unknown as IContact;
 }

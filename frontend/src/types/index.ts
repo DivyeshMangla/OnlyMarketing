@@ -24,6 +24,7 @@ export interface Contact {
   date: string;
   mine: boolean;
   addedBy: string;
+  addedById?: string;
   notes: string;
   activity: Activity[];
 }

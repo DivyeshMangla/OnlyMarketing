@@ -9,8 +9,8 @@ interface TeamModProps {
   activities: Activity[];
   isAdmin: boolean;
   onClose: () => void;
-  onToggleAdmin: (id: string) => void;
-  onRemove: (id: string) => void;
+  onToggleAdmin: (id: string) => Promise<void>;
+  onRemove: (id: string) => Promise<void>;
 }
 
 /**
@@ -20,6 +20,33 @@ export const TeamMod = ({ member, activities, isAdmin, onClose, onToggleAdmin, o
   // ─── State ──────────────────────────────────────────────────────────────────
   const initials = getInitials(member.name);
   const [isConfirmingRemove, setIsConfirmingRemove] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState('');
+
+  const handleToggleAdmin = async () => {
+    try {
+      setIsSubmitting(true);
+      setError('');
+      await onToggleAdmin(member.id);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to update member');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleRemove = async () => {
+    try {
+      setIsSubmitting(true);
+      setError('');
+      await onRemove(member.id);
+      onClose();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to remove member');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   // ─── Render ─────────────────────────────────────────────────────────────────
   return (
@@ -79,11 +106,11 @@ export const TeamMod = ({ member, activities, isAdmin, onClose, onToggleAdmin, o
           <div className="modal-footer-border">
             {!isConfirmingRemove ? (
               <div className="admin-actions">
-                <button className="admin-btn" onClick={() => onToggleAdmin(member.id)}>
+                <button className="admin-btn" onClick={() => void handleToggleAdmin()} disabled={isSubmitting}>
                   <ShieldCheck size={16} /> 
                   {member.role === 'Admin' ? 'Revoke Admin' : 'Make Admin'}
                 </button>
-                <button className="remove-btn-outline" onClick={() => setIsConfirmingRemove(true)}>
+                <button className="remove-btn-outline" onClick={() => setIsConfirmingRemove(true)} disabled={isSubmitting}>
                   <UserX size={16} /> Remove User
                 </button>
               </div>
@@ -92,11 +119,12 @@ export const TeamMod = ({ member, activities, isAdmin, onClose, onToggleAdmin, o
                 <button className="cancel-btn" onClick={() => setIsConfirmingRemove(false)}>
                   Cancel
                 </button>
-                <button className="confirm-btn" onClick={() => { onRemove(member.id); onClose(); }}>
-                  Confirm Remove
+                <button className="confirm-btn" onClick={() => void handleRemove()} disabled={isSubmitting}>
+                  {isSubmitting ? 'Removing...' : 'Confirm Remove'}
                 </button>
               </div>
             )}
+            {error && <div className="error-banner">{error}</div>}
           </div>
         )}
       </div>

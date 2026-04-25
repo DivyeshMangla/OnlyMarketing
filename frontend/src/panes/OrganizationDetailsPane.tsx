@@ -7,10 +7,10 @@ interface OrganizationDetailsPaneProps {
   org: Organization | null;
   userProfile: UserProfile | null;
   onClose: () => void;
-  onUpdate: (id: string, updates: Partial<Organization>) => void;
-  onUpdateMember: (orgId: string, userId: string, status?: MemberStatus, role?: OrgRole) => void;
-  onRemoveMember: (orgId: string, userId: string) => void;
-  onRemoveOrg: (id: string) => void;
+  onUpdate: (id: string, updates: Partial<Organization>) => Promise<Organization | undefined>;
+  onUpdateMember: (orgId: string, userId: string, status?: MemberStatus, role?: OrgRole) => Promise<Organization | undefined>;
+  onRemoveMember: (orgId: string, userId: string) => Promise<Organization | undefined>;
+  onRemoveOrg: (id: string) => Promise<void>;
 }
 
 /**
@@ -30,6 +30,8 @@ export const OrganizationDetailsPane = ({
   const [activeTab, setActiveTab] = useState<'settings' | 'members'>('settings');
   const [isSaved, setIsSaved] = useState(false);
   const [isRemovingOrg, setIsRemovingOrg] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const isOwner = org?.members.find(m => m.userId === userProfile?.id)?.role === 'Owner' || userProfile?.role === 'Admin';
@@ -41,22 +43,74 @@ export const OrganizationDetailsPane = ({
       setLocalData(org);
       setIsSaved(false);
       setIsRemovingOrg(false);
+      setError('');
     }
-  }, [org?.id]);
+  }, [org]);
 
   // ─── Handlers ───────────────────────────────────────────────────────────────
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!org) return;
-    onUpdate(org.id, localData);
-    setIsSaved(true);
-    setTimeout(() => setIsSaved(false), 2000);
+    try {
+      setIsSubmitting(true);
+      setError('');
+      const updated = await onUpdate(org.id, localData);
+      if (updated) {
+        setLocalData(updated);
+      }
+      setIsSaved(true);
+      setTimeout(() => setIsSaved(false), 2000);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to save organization');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
-  const handleDeleteOrg = () => {
+  const handleDeleteOrg = async () => {
     if (!org) return;
-    onRemoveOrg(org.id);
-    setIsRemovingOrg(false);
-    onClose();
+    try {
+      setIsSubmitting(true);
+      setError('');
+      await onRemoveOrg(org.id);
+      setIsRemovingOrg(false);
+      onClose();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to delete organization');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleUpdateMember = async (userId: string, status?: MemberStatus, role?: OrgRole) => {
+    if (!org) return;
+    try {
+      setIsSubmitting(true);
+      setError('');
+      const updated = await onUpdateMember(org.id, userId, status, role);
+      if (updated) {
+        setLocalData(updated);
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to update member');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleRemoveMember = async (userId: string) => {
+    if (!org) return;
+    try {
+      setIsSubmitting(true);
+      setError('');
+      const updated = await onRemoveMember(org.id, userId);
+      if (updated) {
+        setLocalData(updated);
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to remove member');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   /**
@@ -151,11 +205,11 @@ export const OrganizationDetailsPane = ({
                         </div>
                       </div>
                     ) : (
-                      <div className="file-info text-muted">
-                        <Upload size={20} /> {isAdmin ? 'Click to upload PDF' : 'No proposal uploaded'}
-                      </div>
-                    )}
-                  </div>
+                    <div className="file-info text-muted">
+                      <Upload size={20} /> {isAdmin ? 'Click to upload PDF' : 'No proposal uploaded'}
+                    </div>
+                  )}
+                </div>
                 </div>
                 
                 <div className="pane-section">
@@ -163,7 +217,7 @@ export const OrganizationDetailsPane = ({
                   <textarea 
                     className="ps-notes-area template-area-email" 
                     value={localData.emailTemplate || ''} 
-                    disabled={!isAdmin}
+                    disabled={!isAdmin || isSubmitting}
                     onChange={e => setLocalData({...localData, emailTemplate: e.target.value})} 
                     placeholder="Hi {{poc_name}}..." 
                   />
@@ -174,7 +228,7 @@ export const OrganizationDetailsPane = ({
                   <textarea 
                     className="ps-notes-area template-area-small" 
                     value={localData.whatsappTemplate || ''} 
-                    disabled={!isAdmin}
+                    disabled={!isAdmin || isSubmitting}
                     onChange={e => setLocalData({...localData, whatsappTemplate: e.target.value})} 
                     placeholder="Hey {{poc_name}}!" 
                   />
@@ -185,17 +239,18 @@ export const OrganizationDetailsPane = ({
                   <textarea 
                     className="ps-notes-area template-area-small" 
                     value={localData.instaTemplate || ''} 
-                    disabled={!isAdmin}
+                    disabled={!isAdmin || isSubmitting}
                     onChange={e => setLocalData({...localData, instaTemplate: e.target.value})} 
                     placeholder="Hi there!" 
                   />
                 </div>
                 
                 {isAdmin && (
-                  <button className="save-notes-btn save-settings-btn" onClick={handleSave}>
-                    {isSaved ? <><Check size={14} style={{marginRight: 6}}/> Settings Saved</> : 'Save Settings'}
+                  <button className="save-notes-btn save-settings-btn" onClick={() => void handleSave()} disabled={isSubmitting}>
+                    {isSaved ? <><Check size={14} style={{marginRight: 6}}/> Settings Saved</> : isSubmitting ? 'Saving...' : 'Save Settings'}
                   </button>
                 )}
+                {error && <div className="error-banner">{error}</div>}
               </>
             ) : (
               <div className="pane-members-list">
@@ -209,8 +264,8 @@ export const OrganizationDetailsPane = ({
                           <div className="m-email">{m.user?.email || '-'}</div>
                         </div>
                         <div className="m-acts">
-                          <button className="m-act-approve" onClick={() => onUpdateMember(org.id, m.userId, 'Approved')}><Check size={16} /></button>
-                          <button className="m-act-reject" onClick={() => onRemoveMember(org.id, m.userId)}><X size={16} /></button>
+                          <button className="m-act-approve" onClick={() => void handleUpdateMember(m.userId, 'Approved')} disabled={isSubmitting}><Check size={16} /></button>
+                          <button className="m-act-reject" onClick={() => void handleRemoveMember(m.userId)} disabled={isSubmitting}><X size={16} /></button>
                         </div>
                       </div>
                     ))}
@@ -234,12 +289,13 @@ export const OrganizationDetailsPane = ({
                             <select 
                               className="m-role-select" 
                               value={m.role} 
-                              onChange={(e) => onUpdateMember(org.id, m.userId, undefined, e.target.value as OrgRole)}
+                              disabled={isSubmitting}
+                              onChange={(e) => void handleUpdateMember(m.userId, undefined, e.target.value as OrgRole)}
                             >
                               <option value="Member">Member</option>
                               <option value="Admin">Admin</option>
                             </select>
-                            <button className="m-act-remove" onClick={() => onRemoveMember(org.id, m.userId)}><Trash2 size={14} /></button>
+                            <button className="m-act-remove" onClick={() => void handleRemoveMember(m.userId)} disabled={isSubmitting}><Trash2 size={14} /></button>
                           </>
                         )}
                       </div>
@@ -256,11 +312,14 @@ export const OrganizationDetailsPane = ({
                     ) : (
                       <div className="remove-confirm-row">
                         <button className="cancel-btn" onClick={() => setIsRemovingOrg(false)}>Cancel</button>
-                        <button className="confirm-btn" onClick={handleDeleteOrg}>Confirm Delete</button>
+                        <button className="confirm-btn" onClick={() => void handleDeleteOrg()} disabled={isSubmitting}>
+                          {isSubmitting ? 'Deleting...' : 'Confirm Delete'}
+                        </button>
                       </div>
                     )}
                   </div>
                 )}
+                {error && <div className="error-banner">{error}</div>}
               </div>
             )}
           </div>

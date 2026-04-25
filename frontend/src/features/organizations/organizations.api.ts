@@ -16,7 +16,7 @@ export const organizationsApi = {
 
   discover: () => apiClient<Partial<Organization>[]>('/orgs/discover'),
 
-  requestJoin: (id: string) => apiClient<void>(`/orgs/${id}/request`, {
+  requestJoin: (id: string) => apiClient<Organization>(`/orgs/${id}/request`, {
     method: 'POST',
   }),
 

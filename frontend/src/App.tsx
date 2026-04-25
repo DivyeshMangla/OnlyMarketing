@@ -1,5 +1,5 @@
 // App.tsx — Main application entry point for the frontend; manages routing, global state, and modal orchestration.
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { 
   LayoutGrid, 
   Table2, 
@@ -10,7 +10,16 @@ import {
 } from 'lucide-react';
 
 // Types
-import type { Page, MessagePreviewState, CreateContactPayload } from './types';
+import type {
+  Page,
+  MessagePreviewState,
+  CreateContactPayload,
+  ContactStatus,
+  Organization,
+  MemberStatus,
+  OrgRole,
+  UserProfile,
+} from './types';
 
 // Hooks
 import { useAuth } from './features/auth/useAuth';
@@ -53,17 +62,17 @@ export default function App() {
 
   const { 
     organizations, 
-    fetchOrganizations, 
     addOrg, 
     updateOrg, 
     discoverOrgs, 
     joinRequest, 
     updateMember: updateOrgMember, 
     removeMember: removeOrgMember,
-    removeOrg
+    removeOrg,
+    initialized: organizationsReady
   } = useOrganizations();
-  const { contacts, fetchContacts, addContact, updateContact, removeContact, fetchContactDetails } = useContacts(activeOrgId);
-  const { team, fetchTeam, toggleAdmin, removeMember } = useTeam();
+  const { contacts, addContact, updateContact, removeContact, fetchContactDetails } = useContacts(activeOrgId);
+  const { team, toggleAdmin, removeMember } = useTeam();
 
   const [selectedContactId, setSelectedContactId] = useState<string | null>(null);
   const [selectedOrgId, setSelectedOrgId] = useState<string | null>(null);
@@ -74,41 +83,45 @@ export default function App() {
   const [viewingMemberId, setViewingMemberId] = useState<string | null>(null);
   const [activePreview, setActivePreview] = useState<MessagePreviewState | null>(null);
 
-  // ─── Initial Data Load ──────────────────────────────────────────────────────
   useEffect(() => {
-    if (isAuthenticated) {
-      const loadData = async () => {
-        const orgs = await fetchOrganizations();
-        if (orgs.length > 0 && !activeOrgId) {
-          setActiveOrgId(orgs[0].id);
-        } else if (orgs.length === 0) {
-          setActiveOrgId('none');
-        }
-        fetchTeam();
-      };
-      loadData();
+    if (!isAuthenticated || !organizationsReady) {
+      return;
     }
-  }, [isAuthenticated, fetchOrganizations, fetchTeam]);
+    setActiveOrgId((current) => {
+      if (organizations.length === 0) {
+        return 'none';
+      }
+      if (!current) {
+        return organizations[0].id;
+      }
+      if (current === 'none') {
+        return current;
+      }
+      return organizations.some((organization) => organization.id === current)
+        ? current
+        : organizations[0].id;
+    });
+  }, [isAuthenticated, organizations, organizationsReady]);
 
   useEffect(() => {
-    if (activeOrgId) {
-      fetchContacts();
+    if (selectedOrgId && !organizations.some((organization) => organization.id === selectedOrgId)) {
+      setSelectedOrgId(null);
     }
-  }, [activeOrgId, fetchContacts]);
+  }, [organizations, selectedOrgId]);
 
   useEffect(() => {
-    if (activePage === 'team' && isAuthenticated) {
-      fetchTeam();
+    if (selectedContactId && !contacts.some((contact) => contact.id === selectedContactId)) {
+      setSelectedContactId(null);
     }
-  }, [activePage, isAuthenticated, fetchTeam]);
+  }, [contacts, selectedContactId]);
 
   // ─── Derived State ──────────────────────────────────────────────────────────
   const activeOrg = useMemo(() => organizations.find(o => o.id === activeOrgId) || null, [organizations, activeOrgId]);
   
   const processedContacts = useMemo(() => contacts.map(c => ({
     ...c,
-    mine: c.addedBy === userProfile?.name
-  })), [contacts, userProfile?.name]);
+    mine: c.addedById ? c.addedById === userProfile?.id : c.addedBy === userProfile?.name
+  })), [contacts, userProfile?.id, userProfile?.name]);
 
   const selectedContact = useMemo(() => processedContacts.find(c => c.id === selectedContactId) || null, [processedContacts, selectedContactId]);
   const editingOrg = useMemo(() => organizations.find(o => o.id === selectedOrgId) || null, [organizations, selectedOrgId]);
@@ -130,7 +143,7 @@ export default function App() {
 
   const handleAddOrg = async (name: string) => {
     const newOrg = await addOrg(name);
-    if (!activeOrgId) setActiveOrgId(newOrg.id);
+    if (!activeOrgId || activeOrgId === 'none') setActiveOrgId(newOrg.id);
     setShowAddOrgModal(false);
   };
 
@@ -139,6 +152,49 @@ export default function App() {
     if (!member) return;
     await toggleAdmin(id, member.role);
   };
+
+  const handleNotesChange = useCallback(async (notes: string) => {
+    if (!selectedContactId) return undefined;
+    return updateContact(selectedContactId, { notes });
+  }, [selectedContactId, updateContact]);
+
+  const handleStatusChange = useCallback(async (status: ContactStatus) => {
+    if (!selectedContactId) return undefined;
+    return updateContact(selectedContactId, { status });
+  }, [selectedContactId, updateContact]);
+
+  const handleRemoveContact = useCallback(async (id: string) => {
+    await removeContact(id);
+  }, [removeContact]);
+
+  const handleUpdateOrg = useCallback(async (id: string, updates: Partial<Organization>) => {
+    return updateOrg(id, updates);
+  }, [updateOrg]);
+
+  const handleUpdateOrgMember = useCallback(async (orgId: string, userId: string, status?: MemberStatus, role?: OrgRole) => {
+    return updateOrgMember(orgId, userId, status, role);
+  }, [updateOrgMember]);
+
+  const handleRemoveOrgMember = useCallback(async (orgId: string, userId: string) => {
+    return removeOrgMember(orgId, userId);
+  }, [removeOrgMember]);
+
+  const handleRemoveOrg = useCallback(async (id: string) => {
+    await removeOrg(id);
+  }, [removeOrg]);
+
+  const handleJoinRequest = useCallback(async (id: string) => {
+    await joinRequest(id);
+  }, [joinRequest]);
+
+  const handleProfileSave = useCallback(async (profileUpdates: Partial<UserProfile>) => {
+    return updateProfile(profileUpdates ?? {});
+  }, [updateProfile]);
+
+  const handleLogActivity = useCallback(async (type: string, desc: string) => {
+    if (!selectedContact) return undefined;
+    return updateContact(selectedContact.id, { newActivity: { type, desc } });
+  }, [selectedContact, updateContact]);
 
   const handleActionClick = (type: string) => {
     if (!activeOrg) return;
@@ -226,9 +282,9 @@ export default function App() {
       <DetailsPane 
         contact={selectedContact} 
         onClose={() => handleSelectContact(null)} 
-        onNotesChange={(notes) => updateContact(selectedContactId!, { notes })} 
-        onRemove={removeContact} 
-        onStatusChange={(status) => updateContact(selectedContactId!, { status })} 
+        onNotesChange={handleNotesChange} 
+        onRemove={handleRemoveContact} 
+        onStatusChange={handleStatusChange} 
         onActionClick={handleActionClick} 
       />
       
@@ -236,16 +292,16 @@ export default function App() {
         org={editingOrg} 
         userProfile={userProfile}
         onClose={() => setSelectedOrgId(null)} 
-        onUpdate={updateOrg} 
-        onUpdateMember={updateOrgMember}
-        onRemoveMember={removeOrgMember}
-        onRemoveOrg={removeOrg}
+        onUpdate={handleUpdateOrg} 
+        onUpdateMember={handleUpdateOrgMember}
+        onRemoveMember={handleRemoveOrgMember}
+        onRemoveOrg={handleRemoveOrg}
       />
       
       {showAddModal && <AddConModal onClose={() => setShowAddModal(false)} onAdd={handleAddContact} hasOrg={true} />}
       {showAddOrgModal && <AddOrgModal onClose={() => setShowAddOrgModal(false)} onAdd={handleAddOrg} />}
-      {showJoinModal && <JoinOrgModal onClose={() => setShowJoinModal(false)} onDiscover={discoverOrgs} onJoin={joinRequest} />}
-      {showProfileModal && userProfile && <ProfModal profile={userProfile} onClose={() => setShowProfileModal(false)} onSave={updateProfile} onLogout={logout} />}
+      {showJoinModal && <JoinOrgModal onClose={() => setShowJoinModal(false)} onDiscover={discoverOrgs} onJoin={handleJoinRequest} />}
+      {showProfileModal && userProfile && <ProfModal profile={userProfile} onClose={() => setShowProfileModal(false)} onSave={handleProfileSave} onLogout={logout} />}
       
       {viewingMember && (
         <TeamMod 
@@ -266,7 +322,7 @@ export default function App() {
           user={userProfile!} 
           org={activeOrg} 
           onClose={() => setActivePreview(null)} 
-          onLogActivity={(type, desc) => updateContact(selectedContact.id, { newActivity: { type, desc } })}
+          onLogActivity={handleLogActivity}
         />
       )}
     </div>

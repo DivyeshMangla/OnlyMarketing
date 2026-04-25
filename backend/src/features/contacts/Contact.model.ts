@@ -31,6 +31,7 @@ const contactSchema = new Schema<IContact>(
       default: ContactStatus.Added,
     },
     addedBy: { type: String, required: true },
+    addedById: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: false },
     notes: { type: String, default: '' },
     activity: [activitySchema],
   },

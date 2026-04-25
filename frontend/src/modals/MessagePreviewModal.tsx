@@ -11,7 +11,7 @@ interface MessagePreviewModalProps {
   user: UserProfile;
   org: Organization;
   onClose: () => void;
-  onLogActivity: (type: string, desc: string) => void;
+  onLogActivity: (type: string, desc: string) => Promise<Contact | undefined>;
 }
 
 /**
@@ -22,27 +22,45 @@ export const MessagePreviewModal = ({ type, template, contact, user, org, onClos
   const initialMessage = fillPlaceholders(template, { contact, user, org });
   const [message, setMessage] = useState(initialMessage);
   const [isCopied, setIsCopied] = useState(false);
+  const [isLogging, setIsLogging] = useState(false);
+  const [error, setError] = useState('');
 
   // ─── Handlers ───────────────────────────────────────────────────────────────
 
   /**
    * Copies the final message text to the user's clipboard.
    */
-  const handleCopy = () => {
-    navigator.clipboard.writeText(message);
-    setIsCopied(true);
-    onLogActivity('Outreach', `Copied ${type} draft to clipboard`);
-    setTimeout(() => setIsCopied(false), 2000);
+  const handleCopy = async () => {
+    try {
+      setIsLogging(true);
+      setError('');
+      await navigator.clipboard.writeText(message);
+      await onLogActivity('Outreach', `Copied ${type} draft to clipboard`);
+      setIsCopied(true);
+      setTimeout(() => setIsCopied(false), 2000);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to log activity');
+    } finally {
+      setIsLogging(false);
+    }
   };
 
   /**
    * Opens WhatsApp Web or Desktop with the pre-filled message.
    */
-  const handleSendWhatsApp = () => {
-    const cleanPhone = contact.phone.replace(/\D/g, '');
-    const encodedMsg = encodeURIComponent(message);
-    onLogActivity('Outreach', 'Opened WhatsApp with draft message');
-    window.open(`https://wa.me/${cleanPhone}?text=${encodedMsg}`, '_blank');
+  const handleSendWhatsApp = async () => {
+    try {
+      setIsLogging(true);
+      setError('');
+      const cleanPhone = contact.phone.replace(/\D/g, '');
+      const encodedMsg = encodeURIComponent(message);
+      await onLogActivity('Outreach', 'Opened WhatsApp with draft message');
+      window.open(`https://wa.me/${cleanPhone}?text=${encodedMsg}`, '_blank');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to log activity');
+    } finally {
+      setIsLogging(false);
+    }
   };
 
   /**
@@ -88,15 +106,16 @@ export const MessagePreviewModal = ({ type, template, contact, user, org, onClos
           )}
           
           {type === 'WhatsApp' ? (
-            <button className="whatsapp-btn" onClick={handleSendWhatsApp}>
-              Open in WhatsApp
+            <button className="whatsapp-btn" onClick={() => void handleSendWhatsApp()} disabled={isLogging}>
+              {isLogging ? 'Opening...' : 'Open in WhatsApp'}
             </button>
           ) : (
-            <button className="create-btn copy-btn" onClick={handleCopy}>
+            <button className="create-btn copy-btn" onClick={() => void handleCopy()} disabled={isLogging}>
               {isCopied ? <><Check size={18} /> Copied!</> : <><Copy size={18} /> Copy Message</>}
             </button>
           )}
         </div>
+        {error && <div className="error-banner">{error}</div>}
       </div>
     </div>
   );
