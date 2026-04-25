@@ -1,5 +1,5 @@
 import { apiClient } from '../../lib/apiClient';
-import type { Organization } from '../../types';
+import type { Organization, MemberStatus, OrgRole } from '../../types';
 
 export const organizationsApi = {
   getAll: () => apiClient<Organization[]>('/orgs'),

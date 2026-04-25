@@ -1,7 +1,7 @@
 // OrganizationDetailsPane.tsx — Side pane component; allows editing of organization assets and outreach message templates.
 import { useState, useEffect, useRef } from 'react';
 import type { Organization, UserProfile, MemberStatus, OrgRole } from '../types';
-import { X, FileText, Upload, Check, Download, Trash2, UserPlus, Shield, User } from 'lucide-react';
+import { X, FileText, Upload, Check, Download, Trash2, Shield, User } from 'lucide-react';
 
 interface OrganizationDetailsPaneProps {
   org: Organization | null;

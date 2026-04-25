@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { X, Search, Send } from 'lucide-react';
-import { Organization } from '../types';
+import type { Organization } from '../types';
 
 interface JoinOrgModalProps {
   onClose: () => void;

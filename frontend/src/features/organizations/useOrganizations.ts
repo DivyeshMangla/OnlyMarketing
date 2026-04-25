@@ -1,6 +1,6 @@
 // useOrganizations.ts — Custom hook for managing the list of organizations and their specific settings.
 import { useState, useCallback } from 'react';
-import type { Organization } from '../../types';
+import type { Organization, MemberStatus, OrgRole } from '../../types';
 import { organizationsApi } from './organizations.api';
 
 /**
