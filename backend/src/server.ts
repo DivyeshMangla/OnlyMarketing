@@ -29,7 +29,7 @@ const publicPath = path.join(process.cwd(), 'public');
 app.use(express.static(publicPath));
 
 // 3. React Fallback (If nothing else matches, send index.html)
-app.get('*', (req, res) => {
+app.get('/*', (req, res) => {
   // If it's an unrecognized /api route, don't send index.html
   if (req.path.startsWith('/api')) {
     return res.status(404).json({ success: false, message: 'API Route not found' });
