@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { X, Search, Send } from 'lucide-react';
+import { X, Search, Check } from 'lucide-react';
 import type { Organization } from '../types';
 
 interface JoinOrgModalProps {
@@ -57,11 +57,11 @@ export const JoinOrgModal = ({ onClose, onDiscover, onJoin }: JoinOrgModalProps)
                   <div className="org-join-name" style={{ fontWeight: 600 }}>{o.name}</div>
                 </div>
                 {requestedIds.includes(o.id!) ? (
-                  <div className="requested-tag" style={{ fontSize: 13, color: 'var(--text-muted)', display: 'flex', alignItems: 'center' }}>
-                    <Send size={12} style={{ marginRight: 4 }} /> Requested
+                  <div className="requested-tag" style={{ fontSize: 13, color: 'var(--accent)', fontWeight: 600, display: 'flex', alignItems: 'center', marginLeft: 16 }}>
+                    <Check size={14} style={{ marginRight: 4 }} /> Request Sent!
                   </div>
                 ) : (
-                  <button className="create-btn" onClick={() => handleRequest(o.id!)} style={{ padding: '6px 12px', fontSize: 13 }}>
+                  <button className="create-btn" onClick={() => handleRequest(o.id!)} style={{ padding: '8px 16px', fontSize: 13, width: 'auto', marginLeft: 16, flexShrink: 0 }}>
                     Request to Join
                   </button>
                 )}
