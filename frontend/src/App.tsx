@@ -202,9 +202,9 @@ export default function App() {
             <>
               <button className={`sidebar-item ${activePage === 'analytics' ? 'active' : ''}`} onClick={() => { setActivePage('analytics'); setSelectedContactId(null); setSelectedOrgId(null); }}><Table2 />{expanded && <span className="sidebar-label">Analytics</span>}</button>
               <button className={`sidebar-item ${activePage === 'team' ? 'active' : ''}`} onClick={() => { setActivePage('team'); setSelectedContactId(null); setSelectedOrgId(null); }}><Users />{expanded && <span className="sidebar-label">Team Members</span>}</button>
-              <button className={`sidebar-item ${activePage === 'organizations' ? 'active' : ''}`} onClick={() => { setActivePage('organizations'); setSelectedContactId(null); setSelectedOrgId(null); }}><Building />{expanded && <span className="sidebar-label">Organizations</span>}</button>
             </>
           )}
+          <button className={`sidebar-item ${activePage === 'organizations' ? 'active' : ''}`} onClick={() => { setActivePage('organizations'); setSelectedContactId(null); setSelectedOrgId(null); }}><Building />{expanded && <span className="sidebar-label">Organizations</span>}</button>
         </nav>
         <div className="s-spacer" />
         <div className="sidebar-item sidebar-user-btn" onClick={() => setShowProfileModal(true)}>

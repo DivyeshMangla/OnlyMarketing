@@ -10,8 +10,10 @@ import { IOrganization, CreateOrgBody, UpdateOrgBody, OrgRole, MemberStatus } fr
  * @returns Array of organization documents
  */
 export async function getAllOrgs(userId: string | Types.ObjectId, isAdmin: boolean = false): Promise<IOrganization[]> {
-  const query = isAdmin ? {} : { 'members': { $elemMatch: { userId, status: 'Approved' } } };
-  return Organization.find(query).populate('members.userId', 'name email').sort({ createdAt: 1 });
+  const uid = typeof userId === 'string' ? new Types.ObjectId(userId) : userId;
+  const query = isAdmin ? {} : { 'members': { $elemMatch: { userId: uid, status: 'Approved' } } };
+  const orgs = await Organization.find(query).populate('members.userId', 'name email').sort({ createdAt: 1 });
+  return orgs.map(o => o.toJSON()) as unknown as IOrganization[];
 }
 
 /**
@@ -20,10 +22,16 @@ export async function getAllOrgs(userId: string | Types.ObjectId, isAdmin: boole
  * @returns Simple org objects
  */
 export async function getDiscoverOrgs(userId: string | Types.ObjectId): Promise<Partial<IOrganization>[]> {
-  return Organization.find({ 'members.userId': { $ne: userId } })
+  const uid = typeof userId === 'string' ? new Types.ObjectId(userId) : userId;
+  const orgs = await Organization.find({ 'members.userId': { $ne: uid } })
     .select('name _id')
     .sort({ name: 1 })
     .lean();
+  
+  return orgs.map(o => ({
+    id: o._id.toString(),
+    name: o.name
+  }));
 }
 
 /**

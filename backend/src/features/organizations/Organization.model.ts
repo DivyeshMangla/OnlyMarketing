@@ -34,16 +34,21 @@ const organizationSchema = new Schema<IOrganization>(
     toJSON: {
       virtuals: true,
       transform: (_, ret: any) => {
-        ret.id = ret._id.toString();
+        ret.id = ret._id ? ret._id.toString() : ret.id;
         
         if (ret.members) {
           ret.members = ret.members.map((m: any) => {
+            // Handle populated case
             if (m.userId && typeof m.userId === 'object' && m.userId.name) {
               return {
                 ...m,
                 user: { name: m.userId.name, email: m.userId.email },
-                userId: m.userId._id.toString()
+                userId: m.userId._id ? m.userId._id.toString() : m.userId.toString()
               };
+            }
+            // Handle non-populated case (ensure string)
+            if (m.userId && typeof m.userId !== 'string') {
+               m.userId = m.userId.toString();
             }
             return m;
           });
