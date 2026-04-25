@@ -42,7 +42,8 @@ export async function createOrg(data: CreateOrgBody, ownerId: string | Types.Obj
     }]
   });
   await org.save();
-  return Organization.findById(org._id).populate('members.userId', 'name email') as unknown as IOrganization;
+  const populated = await Organization.findById(org._id).populate('members.userId', 'name email');
+  return populated as unknown as IOrganization;
 }
 
 /**
@@ -51,7 +52,7 @@ export async function createOrg(data: CreateOrgBody, ownerId: string | Types.Obj
  * @param userId - Requesting user's ID
  */
 export async function requestJoin(orgId: string | Types.ObjectId, userId: string | Types.ObjectId): Promise<IOrganization | null> {
-  return Organization.findByIdAndUpdate(
+  return await Organization.findByIdAndUpdate(
     orgId,
     { $addToSet: { members: { userId, role: 'Member', status: 'Pending' } } },
     { new: true }
@@ -79,14 +80,14 @@ export async function updateMember(
   if (updates.role) member.role = updates.role;
 
   await org.save();
-  return Organization.findById(orgId).populate('members.userId', 'name email');
+  return await Organization.findById(orgId).populate('members.userId', 'name email');
 }
 
 /**
  * Removes a member or rejects a request.
  */
 export async function removeMember(orgId: string | Types.ObjectId, userId: string | Types.ObjectId): Promise<IOrganization | null> {
-  return Organization.findByIdAndUpdate(
+  return await Organization.findByIdAndUpdate(
     orgId,
     { $pull: { members: { userId } } },
     { new: true }
@@ -103,7 +104,7 @@ export async function updateOrg(
   id: string | Types.ObjectId,
   updates: UpdateOrgBody
 ): Promise<IOrganization | null> {
-  return Organization.findByIdAndUpdate(id, updates, {
+  return await Organization.findByIdAndUpdate(id, updates, {
     new: true,
     runValidators: true,
   }).populate('members.userId', 'name email');
