@@ -151,7 +151,7 @@ export const ApolloSearch = () => {
   return (
     <div className="page">
       <div className="page-title">Apollo Search</div>
-      <div className="page-sub">Find sponsorship contacts by company.</div>
+      <div className="page-sub">Find India-based sponsorship contacts by company.</div>
 
       <form className="apollo-search-bar" onSubmit={handleSubmit}>
         <div className="apollo-search-input-wrap">

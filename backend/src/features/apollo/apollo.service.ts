@@ -18,6 +18,7 @@ const PEOPLE_TITLES = [
   'campus marketing',
 ];
 const PEOPLE_SENIORITIES = ['c_suite', 'vp', 'head', 'director', 'manager', 'partner', 'owner'];
+const PEOPLE_LOCATIONS = ['India'];
 
 type ApolloRecord = Record<string, unknown>;
 
@@ -218,6 +219,7 @@ export async function searchApolloContacts(organizationId: string, domain?: stri
   params.set('include_similar_titles', 'true');
   appendList(params, 'person_titles[]', PEOPLE_TITLES);
   appendList(params, 'person_seniorities[]', PEOPLE_SENIORITIES);
+  appendList(params, 'person_locations[]', PEOPLE_LOCATIONS);
 
   if (organizationId) {
     params.append('organization_ids[]', organizationId);
