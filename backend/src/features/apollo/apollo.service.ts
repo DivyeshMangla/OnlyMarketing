@@ -215,7 +215,7 @@ export async function searchApolloCompanies(query: string): Promise<ApolloCompan
 export async function searchApolloContacts(organizationId: string, domain?: string): Promise<ApolloContact[]> {
   const params = new URLSearchParams();
   params.set('page', '1');
-  params.set('per_page', '25');
+  params.set('per_page', '100');
   params.set('include_similar_titles', 'true');
   appendList(params, 'person_titles[]', PEOPLE_TITLES);
   appendList(params, 'person_seniorities[]', PEOPLE_SENIORITIES);
