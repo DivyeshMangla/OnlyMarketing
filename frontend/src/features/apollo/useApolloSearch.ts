@@ -31,6 +31,7 @@ export const useApolloSearch = () => {
     resetContacts: contactSearchMutation.reset,
     companyLoading: companySearchMutation.isPending,
     contactsLoading: contactSearchMutation.isPending,
+    contactsLoaded: contactSearchMutation.isSuccess,
     companyError: companySearchMutation.error?.message ?? '',
     contactsError: contactSearchMutation.error?.message ?? '',
   };

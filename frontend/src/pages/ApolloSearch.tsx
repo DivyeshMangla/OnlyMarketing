@@ -118,6 +118,7 @@ export const ApolloSearch = () => {
     resetContacts,
     companyLoading,
     contactsLoading,
+    contactsLoaded,
     companyError,
     contactsError,
   } = useApolloSearch();
@@ -211,9 +212,18 @@ export const ApolloSearch = () => {
           <div>
             <div className="apollo-results-title">Contacts</div>
             <div className="apollo-results-sub">
-              {selectedCompany ? selectedCompany.name : 'No company selected'}
+              {selectedCompany
+                ? contactsLoaded
+                  ? `${contacts.length} India-based contacts loaded for ${selectedCompany.name}`
+                  : selectedCompany.name
+                : 'No company selected'}
             </div>
           </div>
+          {contactsLoaded && (
+            <div className="apollo-results-count">
+              {contacts.length} loaded
+            </div>
+          )}
         </div>
 
         <div className="tbl-head apollo-contact-grid">
@@ -235,7 +245,11 @@ export const ApolloSearch = () => {
             ))
           ) : (
             <div className="empty-state">
-              {selectedCompany ? 'No contacts loaded yet.' : 'Search and confirm a company.'}
+              {selectedCompany
+                ? contactsLoaded
+                  ? 'No India-based contacts found for this company.'
+                  : 'No contacts loaded yet.'
+                : 'Search and confirm a company.'}
             </div>
           )}
         </div>
