@@ -11,6 +11,7 @@ import authRoutes from './features/auth/auth.routes';
 import contactRoutes from './features/contacts/contact.routes';
 import orgRoutes from './features/organizations/organization.routes';
 import teamRoutes from './features/team/team.routes';
+import apolloRoutes from './features/apollo/apollo.routes';
 
 const BODY_LIMIT = '10mb';
 const app = express();
@@ -23,6 +24,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/orgs', orgRoutes);
 app.use('/api/contacts', contactRoutes);
 app.use('/api/team', teamRoutes);
+app.use('/api/apollo', apolloRoutes);
 
 // 2. Static Files
 const publicPath = path.join(process.cwd(), 'public');

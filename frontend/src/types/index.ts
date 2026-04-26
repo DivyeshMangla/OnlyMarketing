@@ -1,5 +1,5 @@
 // index.ts — Global TypeScript definitions; contains interfaces for all core entities (Contacts, Orgs, Users).
-export type Page = 'dashboard' | 'analytics' | 'team' | 'organizations';
+export type Page = 'dashboard' | 'analytics' | 'team' | 'organizations' | 'apollo';
 export type ContactStatus = 'Added' | 'In The Works' | 'Denied';
 export type UserPosition = 'Executive' | 'Core' | 'Coordinator' | 'Executive Board';
 export type UserRole = 'Admin' | 'User';
@@ -84,5 +84,39 @@ export interface CreateContactPayload {
 export interface MessagePreviewState {
   type: string;
   template: string;
+}
+
+export interface ApolloCompany {
+  id: string;
+  name: string;
+  domain: string;
+  logoUrl: string;
+  websiteUrl: string;
+  industry: string;
+  location: string;
+  employeeCount?: number;
+  size: string;
+}
+
+export interface ApolloContact {
+  id: string;
+  name: string;
+  title: string;
+  seniority: string;
+  location: string;
+  organizationName: string;
+  linkedinUrl: string;
+  photoUrl: string;
+  hasEmail: boolean;
+  hasPhone: boolean;
+  apolloUrl: string;
+}
+
+export interface ApolloCompanySearchResponse {
+  companies: ApolloCompany[];
+}
+
+export interface ApolloContactSearchResponse {
+  contacts: ApolloContact[];
 }
 

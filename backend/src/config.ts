@@ -27,6 +27,7 @@ export const config = {
   jwtSecret: requireEnv('JWT_SECRET'),
   jwtExpiresIn: getEnv('JWT_EXPIRES_IN', '7d'),
   nodeEnv: getEnv('NODE_ENV', 'development'),
+  apolloKey: getEnv('APOLLO_KEY', ''),
 } as const;
 
 export type Config = typeof config;

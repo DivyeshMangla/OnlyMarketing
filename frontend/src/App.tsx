@@ -6,7 +6,8 @@ import {
   Users, 
   Menu, 
   ChevronRight, 
-  Building 
+  Building,
+  Search
 } from 'lucide-react';
 
 // Types
@@ -37,6 +38,7 @@ import { AllContacts } from './pages/AllContacts';
 import { TeamMembers } from './pages/TeamMembers';
 import { Organizations } from './pages/Organizations';
 import { Login } from './pages/Login';
+import { ApolloSearch } from './pages/ApolloSearch';
 
 // Modals & Panes
 import { AddOrgModal } from './modals/AddOrgModal';
@@ -258,6 +260,7 @@ export default function App() {
           {userProfile?.role === 'Admin' && (
             <>
               <button className={`sidebar-item ${activePage === 'analytics' ? 'active' : ''}`} onClick={() => { setActivePage('analytics'); setSelectedContactId(null); setSelectedOrgId(null); }}><Table2 />{expanded && <span className="sidebar-label">Analytics</span>}</button>
+              <button className={`sidebar-item ${activePage === 'apollo' ? 'active' : ''}`} onClick={() => { setActivePage('apollo'); setSelectedContactId(null); setSelectedOrgId(null); }}><Search />{expanded && <span className="sidebar-label">Apollo Search</span>}</button>
               <button className={`sidebar-item ${activePage === 'team' ? 'active' : ''}`} onClick={() => { setActivePage('team'); setSelectedContactId(null); setSelectedOrgId(null); }}><Users />{expanded && <span className="sidebar-label">Team Members</span>}</button>
             </>
           )}
@@ -275,6 +278,7 @@ export default function App() {
       <main className="main">
         {activePage === 'dashboard' && <Dashboard contacts={processedContacts} onSelect={handleSelectContact} onAddClick={() => setShowAddModal(true)} />}
         {activePage === 'analytics' && <AllContacts contacts={processedContacts} onSelect={handleSelectContact} onAddClick={() => setShowAddModal(true)} />}
+        {activePage === 'apollo' && <ApolloSearch />}
         {activePage === 'team' && <TeamMembers team={team} onViewProfile={(m) => setViewingMemberId(m.id)} />}
         {activePage === 'organizations' && <Organizations orgs={organizations} onSelect={(o) => setSelectedOrgId(o.id)} onAddClick={() => setShowAddOrgModal(true)} />}
       </main>
