@@ -11,7 +11,7 @@ import { UserRole } from '../auth/auth.types';
  * @param res - Express Response
  */
 export async function listTeam(req: Request, res: Response): Promise<void> {
-  const team = await getAllTeamMembers();
+  const team = await getAllTeamMembers(req.user.role === UserRole.Admin);
   sendSuccess(res, team);
 }
 

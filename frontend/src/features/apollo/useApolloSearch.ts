@@ -1,9 +1,12 @@
 // useApolloSearch.ts — Custom hook for admin-only Apollo company and contact searches.
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import type { ApolloCompanySearchResponse, ApolloContactSearchResponse } from '../../types';
 import { apolloApi } from './apollo.api';
+import { queryKeys } from '../../lib/queryKeys';
 
 export const useApolloSearch = () => {
+  const queryClient = useQueryClient();
+
   const companySearchMutation = useMutation<ApolloCompanySearchResponse, Error, string>({
     mutationFn: apolloApi.searchCompanies,
   });
@@ -11,9 +14,12 @@ export const useApolloSearch = () => {
   const contactSearchMutation = useMutation<
     ApolloContactSearchResponse,
     Error,
-    { organizationId: string; domain: string }
+    { organizationId: string; domain: string; companyName: string }
   >({
     mutationFn: apolloApi.searchContacts,
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: queryKeys.team.all });
+    },
   });
 
   return {

@@ -5,10 +5,12 @@ export type UserPosition = 'Executive' | 'Core' | 'Coordinator' | 'Executive Boa
 export type UserRole = 'Admin' | 'User';
 
 export interface Activity {
+  id?: string;
   type: string;
   desc: string;
   date: string;
   performedBy: string;
+  performedById?: string;
   contactName: string;
 }
 
@@ -36,6 +38,7 @@ export interface TeamMember {
   email: string;
   phone: string;
   role: UserRole;
+  activities?: Activity[];
 }
 
 export interface UserProfile {

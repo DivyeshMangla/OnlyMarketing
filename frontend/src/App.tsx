@@ -128,6 +128,13 @@ export default function App() {
   const selectedContact = useMemo(() => processedContacts.find(c => c.id === selectedContactId) || null, [processedContacts, selectedContactId]);
   const editingOrg = useMemo(() => organizations.find(o => o.id === selectedOrgId) || null, [organizations, selectedOrgId]);
   const viewingMember = useMemo(() => team.find(m => m.id === viewingMemberId) || null, [team, viewingMemberId]);
+  const viewingMemberActivities = useMemo(() => {
+    if (!viewingMember) return [];
+    return [
+      ...(viewingMember.activities ?? []),
+      ...getMemberActivities(contacts, viewingMember.name),
+    ];
+  }, [contacts, viewingMember]);
 
   // ─── Handlers ───────────────────────────────────────────────────────────────
   const handleAddContact = async (data: CreateContactPayload) => {
@@ -310,7 +317,7 @@ export default function App() {
       {viewingMember && (
         <TeamMod 
           member={viewingMember} 
-          activities={getMemberActivities(contacts, viewingMember.name)} 
+          activities={viewingMemberActivities} 
           isAdmin={userProfile?.role === 'Admin'} 
           onClose={() => setViewingMemberId(null)} 
           onToggleAdmin={handleToggleAdmin} 

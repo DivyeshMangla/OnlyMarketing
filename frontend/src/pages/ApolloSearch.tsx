@@ -143,6 +143,7 @@ export const ApolloSearch = () => {
     await fetchContacts({
       organizationId: selectedCompany.id,
       domain: selectedCompany.domain,
+      companyName: selectedCompany.name,
     });
   };
 

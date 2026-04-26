@@ -3,6 +3,7 @@ import { Request, Response } from 'express';
 import { AppError } from '../../shared/errorHandler';
 import { sendSuccess } from '../../shared/response';
 import { UserRole } from '../auth/auth.types';
+import { recordActivity } from '../activity/activity.service';
 import { searchApolloCompanies, searchApolloContacts } from './apollo.service';
 import { ApolloCompanySearchResponse, ApolloContactSearchResponse } from './apollo.types';
 
@@ -33,11 +34,19 @@ export async function searchContacts(req: Request, res: Response): Promise<void>
 
   const organizationId = getQueryString(req.query.organizationId);
   const domain = getQueryString(req.query.domain);
+  const companyName = getQueryString(req.query.companyName) || domain || organizationId;
 
   if (!organizationId && !domain) {
     throw new AppError('Organization ID or domain is required', 400);
   }
 
   const contacts = await searchApolloContacts(organizationId, domain);
+  await recordActivity({
+    type: 'Apollo Search',
+    desc: `Looked up ${companyName} using Apollo Search`,
+    performedBy: req.user.name,
+    performedById: req.user._id,
+    contactName: companyName,
+  });
   sendSuccess<ApolloContactSearchResponse>(res, { contacts });
 }

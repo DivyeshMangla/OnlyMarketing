@@ -1,15 +1,46 @@
 // team.service.ts — Data access layer for team member management; interacts with the User model.
 import { Types } from 'mongoose';
 import { User } from '../auth/User.model';
-import { IUser, UserRole } from '../auth/auth.types';
+import { IUser, UserRole, UserPosition } from '../auth/auth.types';
+import { getActivitiesByUserIds } from '../activity/activity.service';
+import { ActivityRecordDto } from '../activity/activity.types';
+
+interface TeamMemberResponse {
+  id: string;
+  name: string;
+  position: UserPosition;
+  email: string;
+  phone: string;
+  role: UserRole;
+  activities: ActivityRecordDto[];
+}
 
 /**
  * Retrieves all users from the database, excluding passwords.
  * @returns Array of user documents
  */
-export async function getAllTeamMembers(): Promise<IUser[]> {
+export async function getAllTeamMembers(includeActivities = false): Promise<TeamMemberResponse[]> {
   const users = await User.find().select('-password').sort({ createdAt: 1 });
-  return users.map(u => u.toJSON()) as unknown as IUser[];
+  const team = users.map(u => u.toJSON()) as unknown as TeamMemberResponse[];
+
+  if (!includeActivities) {
+    return team.map((member) => ({ ...member, activities: [] }));
+  }
+
+  const activities = await getActivitiesByUserIds(team.map((member) => member.id));
+  const activitiesByUserId = new Map<string, ActivityRecordDto[]>();
+
+  activities.forEach((activity) => {
+    if (!activity.performedById) return;
+    const existing = activitiesByUserId.get(activity.performedById) ?? [];
+    existing.push(activity);
+    activitiesByUserId.set(activity.performedById, existing);
+  });
+
+  return team.map((member) => ({
+    ...member,
+    activities: activitiesByUserId.get(member.id) ?? [],
+  }));
 }
 
 /**

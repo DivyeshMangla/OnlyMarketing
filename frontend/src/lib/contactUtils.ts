@@ -30,7 +30,7 @@ export const filterMyContacts = (contacts: Contact[]) => {
  * @returns Flat array of activity items
  */
 export const getMemberActivities = (contacts: Contact[], name: string) => {
-  return contacts.flatMap(c => c.activity).filter(a => a.performedBy === name);
+  return contacts.flatMap(c => c.activity ?? []).filter(a => a.performedBy === name);
 };
 
 /**
