@@ -46,4 +46,4 @@ A full-stack CRM built for college fest and society marketing teams. Manages spo
 
 ## License
 
-Copyright (c) 2025 Divyesh Mangla. Released under the [MIT License](./LICENSE).
+Copyright (c) 2026 Divyesh Mangla. Released under the [MIT License](./LICENSE).
